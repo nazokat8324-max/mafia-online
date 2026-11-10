@@ -319,3 +319,9 @@ ul { list-style: none; margin: 0; padding: 0; }
 .stepper button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255, 255, 255, .1); color: var(--text); cursor: pointer; }
 .set-note { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
 .settings-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+/* ───────── ovozli chat ───────── */
+.voice-status { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+.voice-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge.mic { top: auto; bottom: -6px; right: -8px; background: #1d3b2a; font-size: 11px; }
+.seat.talking .avatar { border-color: #6dff9e; box-shadow: 0 0 0 4px rgba(109, 255, 158, .45), 0 0 26px rgba(109, 255, 158, .65); }

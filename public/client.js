@@ -87,6 +87,7 @@ $('copyBtn').onclick = async () => {
 $('leaveBtn').onclick = () => {
   const playing = state && !['lobby', 'gameover'].includes(state.phase) && state.me.alive;
   if (playing && !confirm("O'yindan chiqsangiz, siz o'lgan hisoblanasiz. Chiqasizmi?")) return;
+  Voice.leave();
   socket.emit('leave');
   clearSession();
   state = null;
@@ -111,9 +112,47 @@ socket.on('state', (s) => {
   if (s.phase === 'lobby') roleShownForGame = false;
   const prev = state;
   state = s;
+  Voice.sync(s);
   render();
   playSounds(prev, s);
 });
+
+// ───────── OVOZLI CHAT ─────────
+Voice.init(socket, (msg) => { if (msg) toast(msg); renderVoice(); });
+
+const VOICE_MODE = {
+  all: '🟢 Hamma bir-birini eshitadi',
+  silent: '🌙 Jimlik — hech kim eshitmaydi',
+  mafia: '🔫 Faqat mafiya sheriklaringiz eshitadi',
+  listen: "💀 Siz o'lgansiz — faqat tinglaysiz",
+  lastword: "🕯️ Faqat oxirgi so'z egasi gapiradi",
+  'lastword-speaker': "🕯️ Oxirgi so'zingiz — hamma sizni eshitadi",
+};
+
+function renderVoice() {
+  const box = $('voiceBox');
+  if (!state) return;
+  if (!Voice.supported) {
+    box.innerHTML = "<h3>🎙️ Ovozli chat</h3><p class=\"voice-status\">Bu brauzer ovozli chatni qo'llamaydi</p>";
+    return;
+  }
+  const inVoice = state.players.filter((p) => p.voice).length;
+  if (!Voice.enabled) {
+    box.innerHTML = `<h3>🎙️ Ovozli chat</h3>
+      <p class="voice-status">${inVoice ? `Hozir ${inVoice} kishi ovozli chatda` : 'Mikrofon orqali gaplashing'}</p>
+      <button class="btn primary wide" id="voiceJoin">🎙️ Ovozli chatga qo'shilish</button>`;
+    $('voiceJoin').onclick = () => Voice.join();
+    return;
+  }
+  const micBtn = !Voice.hasMic ? '<span class="voice-status">🎧 Faqat tinglash</span>'
+    : `<button class="btn ${Voice.muted ? 'danger' : ''}" id="voiceMute">${Voice.muted ? "🔇 Mikrofon o'chiq" : '🎙️ Mikrofon yoqiq'}</button>`;
+  box.innerHTML = `<h3>🎙️ Ovozli chat · ${inVoice} kishi</h3>
+    <p class="voice-status">${VOICE_MODE[Voice.mode] || ''}</p>
+    <div class="voice-btns">${micBtn}<button class="btn ghost" id="voiceLeave">Chiqish</button></div>`;
+  const mute = $('voiceMute');
+  if (mute) mute.onclick = () => Voice.toggleMute();
+  $('voiceLeave').onclick = () => Voice.leave();
+}
 
 // ───────── ovozlar: holat o'zgarishiga qarab ─────────
 let lastDeathLogId = Infinity;
@@ -213,6 +252,7 @@ function render() {
 
   renderSeats();
   renderCenter();
+  renderVoice();
   renderRoleCard();
   renderLog();
 
@@ -279,6 +319,7 @@ function renderSeats() {
     if (p.votes) badges += `<span class="badge">${p.votes}</span>`;
     if (p.ready) badges += '<span class="badge ok">✓</span>';
     if (p.id === state.hostId && phase === 'lobby') badges += '<span class="badge left">👑</span>';
+    if (p.voice) badges += '<span class="badge mic">🎙️</span>';
 
     let picks = '';
     if (p.mafiaPicks && p.mafiaPicks.length) picks = `<div class="picks">🎯 ${p.mafiaPicks.map(esc).join(', ')}</div>`;

@@ -13,6 +13,17 @@ app.get('/healthz', (req, res) => res.send('ok')); // Render tekshiruvi uchun
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Ovozli chat uchun ICE serverlar. TURN server qo'shish uchun Render'da
+// TURN_URL, TURN_USER, TURN_PASS muhit o'zgaruvchilarini kiriting.
+const ICE_SERVERS = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+if (process.env.TURN_URL) {
+  ICE_SERVERS.push({
+    urls: process.env.TURN_URL.split(','),
+    username: process.env.TURN_USER,
+    credential: process.env.TURN_PASS,
+  });
+}
+
 /** code -> Room */
 const rooms = new Map();
 
@@ -55,6 +66,7 @@ function attach(socket, room, player) {
 
 io.on('connection', (socket) => {
   socket.emit('roles', ROLES);
+  socket.emit('ice', ICE_SERVERS);
 
   socket.on('create', ({ name } = {}, cb) => {
     if (typeof cb !== 'function') cb = () => {};
@@ -113,6 +125,15 @@ io.on('connection', (socket) => {
   socket.on('endLastWord', withPlayer((room, p) => room.endLastWord(p)));
   socket.on('chat', withPlayer((room, p, text) => room.sendChat(p, text)));
   socket.on('lobby', withPlayer((room, p) => room.backToLobby(p)));
+
+  // Ovozli chat: qo'shilish/chiqish va WebRTC signallarini uzatish
+  socket.on('voice', withPlayer((room, p, on) => room.setVoice(p, on)));
+  socket.on('rtc', withPlayer((room, p, msg) => {
+    if (!msg || typeof msg !== 'object') return;
+    const target = room.byId(msg.to);
+    if (!target || !target.socketId || !p.voice || !target.voice) return;
+    io.to(target.socketId).emit('rtc', { from: p.id, data: msg.data });
+  }));
   socket.on('leave', withPlayer((room, p) => {
     room.removePlayer(p);
     socket.data = {};
@@ -123,6 +144,8 @@ io.on('connection', (socket) => {
     if (p.socketId !== socket.id) return;
     p.connected = false;
     p.socketId = null;
+    p.voice = false;
+    p.voiceSession = null;
     if (room.hostId === p.id) {
       const next = room.players.find((q) => q.connected);
       if (next) room.hostId = next.id;

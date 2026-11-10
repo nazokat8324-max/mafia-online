@@ -206,6 +206,7 @@ class Room {
       token: crypto.randomBytes(16).toString('hex'),
       name, socketId, connected: true,
       role: null, alive: true, known: {}, bullets: 0,
+      voice: false, voiceSession: null, // ovozli chat
     };
     this.players.push(p);
     if (!this.hostId) this.hostId = p.id;
@@ -215,6 +216,8 @@ class Room {
 
   removePlayer(p) {
     clearTimeout(p.leaveTimer);
+    p.voice = false;
+    p.voiceSession = null;
     if (this.inGame()) {
       // O'yin paytida chiqib ketgan o'yinchi "o'ladi"
       p.socketId = null;
@@ -586,6 +589,40 @@ class Room {
     this.broadcast();
   }
 
+  // ───────── OVOZLI CHAT ─────────
+  setVoice(p, on) {
+    p.voice = !!on && p.connected;
+    p.voiceSession = p.voice ? crypto.randomBytes(6).toString('hex') : null;
+    this.broadcast();
+  }
+
+  /** Hozirgi fazada speaker gapirsa, listener eshitadimi? */
+  canHear(speaker, listener) {
+    if (speaker === listener || !speaker.voice || !listener.voice) return false;
+    switch (this.phase) {
+      case 'lobby':
+      case 'gameover': return true;
+      case 'roles': return false;
+      case 'night': return speaker.alive && listener.alive && isMafia(speaker) && isMafia(listener);
+      case 'lastWord': return this.lastWordIds.has(speaker.id);
+      default: return speaker.alive; // tong, kun, ovoz berish — tiriklar gapiradi, hamma eshitadi
+    }
+  }
+
+  voiceFor(p) {
+    const others = this.players.filter((q) => q !== p);
+    let mode = 'all';
+    if (this.phase === 'roles') mode = 'silent';
+    else if (this.phase === 'night') mode = p.alive && isMafia(p) ? 'mafia' : 'silent';
+    else if (this.phase === 'lastWord') mode = this.lastWordIds.has(p.id) ? 'lastword-speaker' : 'lastword';
+    else if (this.inGame() && !p.alive) mode = 'listen';
+    return {
+      mode,
+      to: others.filter((q) => this.canHear(p, q)).map((q) => q.id),
+      from: others.filter((q) => this.canHear(q, p)).map((q) => q.id),
+    };
+  }
+
   // ───────── CHAT ─────────
   chatChannel(p) {
     if (!this.inGame()) return 'all';
@@ -638,6 +675,8 @@ class Room {
         votes: voteCounts[q.id] || 0,
         ready: this.phase === 'day' && this.ready.has(q.id),
         speaking: this.phase === 'lastWord' && this.lastWordIds.has(q.id),
+        voice: q.voice,
+        voiceSession: q.voiceSession,
       };
       if (showVotes && this.votes[q.id]) v.votedFor = this.votes[q.id]; // ovozlar ochiq
       // Mafiya tunda sheriklari kimni tanlaganini ko'radi
@@ -683,6 +722,7 @@ class Room {
         myTarget,
         chat: this.chatChannel(p),
         lastWord: this.phase === 'lastWord' && this.lastWordIds.has(p.id),
+        voice: this.voiceFor(p),
       },
       log: this.log.filter((l) => l.to === null || l.to === p.id).slice(-60),
     };
