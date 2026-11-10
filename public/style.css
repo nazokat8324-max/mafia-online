@@ -287,3 +287,34 @@ ul { list-style: none; margin: 0; padding: 0; }
   background: #111; color: #fff; padding: 10px 18px; border-radius: 10px; z-index: 80;
   box-shadow: 0 8px 30px rgba(0, 0, 0, .5);
 }
+
+/* ───────── oxirgi so'z ───────── */
+.seat.speaking .avatar { border-color: #ffd27a; box-shadow: 0 0 0 4px rgba(255, 210, 122, .5), 0 0 30px rgba(255, 210, 122, .7); animation: candle 1.4s ease-in-out infinite; }
+.seat.speaking { opacity: 1; filter: none; }
+@keyframes candle { 50% { box-shadow: 0 0 0 2px rgba(255, 210, 122, .3), 0 0 14px rgba(255, 210, 122, .4); } }
+#chatList li.lastword { background: rgba(255, 210, 122, .14); border-radius: 6px; padding: 2px 6px; font-style: italic; }
+
+/* ───────── markaz tugmalari ───────── */
+.center-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.center-error { color: #ffb4a8 !important; font-weight: 600; }
+.muted-chips .chip { background: rgba(0, 0, 0, .22); color: #cfe3d2; font-size: 11px; }
+
+/* ───────── sozlamalar oynasi ───────── */
+.settings-card { max-width: 460px; text-align: left; max-height: calc(100vh - 32px); overflow-y: auto; animation: none; }
+.settings-card h2 { text-align: center; }
+.settings-card h3 { margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { flex: 1; padding: 8px; background: transparent; color: var(--text); border: 0; cursor: pointer; }
+.seg button.on { background: var(--gold); color: #2a1a08; font-weight: 700; }
+.role-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; margin-top: 10px; }
+.role-opt, .set-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 7px 10px; border-radius: 10px; background: rgba(255, 255, 255, .05); cursor: pointer;
+}
+.set-row { margin-bottom: 6px; }
+.set-row select { font: inherit; color: var(--text); background: #2a1f18; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+.role-opt input, .set-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--gold); }
+.stepper { display: inline-flex; align-items: center; gap: 6px; }
+.stepper button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255, 255, 255, .1); color: var(--text); cursor: pointer; }
+.set-note { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+.settings-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }

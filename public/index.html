@@ -40,6 +40,7 @@
       <div id="phaseLabel" class="phase-label"></div>
       <div class="top-right">
         <span id="timer" class="timer"></span>
+        <button id="soundBtn" class="btn tiny ghost" title="Ovoz: hammasi / faqat effektlar / o'chiq">🔊</button>
         <button id="leaveBtn" class="btn tiny ghost" title="Chiqish">✕</button>
       </div>
     </header>
@@ -94,9 +95,22 @@
     </div>
   </section>
 
+  <!-- Xona sozlamalari (faqat xona egasi uchun) -->
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-card settings-card">
+      <h2>⚙️ Stol sozlamalari</h2>
+      <div id="settingsBody"></div>
+      <div class="settings-actions">
+        <button id="settingsCancel" class="btn">Bekor qilish</button>
+        <button id="settingsSave" class="btn primary">Saqlash</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="sound.js"></script>
   <script src="client.js"></script>
 </body>
 </html>

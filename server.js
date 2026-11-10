@@ -107,7 +107,10 @@ io.on('connection', (socket) => {
   }));
   socket.on('act', withPlayer((room, p, targetId) => room.act(p, targetId)));
   socket.on('vote', withPlayer((room, p, targetId) => room.vote(p, targetId)));
+  socket.on('skip', withPlayer((room, p) => room.skip(p)));
   socket.on('ready', withPlayer((room, p) => room.toggleReady(p)));
+  socket.on('settings', withPlayer((room, p, s) => room.updateSettings(p, s)));
+  socket.on('endLastWord', withPlayer((room, p) => room.endLastWord(p)));
   socket.on('chat', withPlayer((room, p, text) => room.sendChat(p, text)));
   socket.on('lobby', withPlayer((room, p) => room.backToLobby(p)));
   socket.on('leave', withPlayer((room, p) => {
