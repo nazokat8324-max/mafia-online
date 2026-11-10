@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mafia — Tungi shahar</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ───────── BOSH SAHIFA ───────── -->
+  <section id="home" class="screen">
+    <div class="home-card">
+      <div class="moon">🌙</div>
+      <h1>MAFIA</h1>
+      <p class="sub">Stol atrofida. Tun tushganda — ko'zlar yumiladi.</p>
+
+      <label class="field">Ismingiz
+        <input id="nameInput" maxlength="16" placeholder="Masalan: Sarvar" autocomplete="off">
+      </label>
+      <button id="createBtn" class="btn primary wide">Yangi stol ochish</button>
+
+      <div class="divider"><span>yoki do'stingiz stoliga</span></div>
+
+      <div class="row">
+        <input id="codeInput" maxlength="5" placeholder="KOD" autocomplete="off">
+        <button id="joinBtn" class="btn">Qo'shilish</button>
+      </div>
+      <p id="homeError" class="error"></p>
+      <p class="hint">Kamida 5 kishi kerak. Har kim o'z telefoni yoki kompyuteridan kiradi.</p>
+    </div>
+  </section>
+
+  <!-- ───────── O'YIN ───────── -->
+  <section id="game" class="screen hidden">
+    <header class="topbar">
+      <div class="room">Stol: <b id="roomCode"></b>
+        <button id="copyBtn" class="btn tiny" title="Taklif havolasini nusxalash">🔗 Taklif</button>
+      </div>
+      <div id="phaseLabel" class="phase-label"></div>
+      <div class="top-right">
+        <span id="timer" class="timer"></span>
+        <button id="leaveBtn" class="btn tiny ghost" title="Chiqish">✕</button>
+      </div>
+    </header>
+
+    <div id="awakeBanner" class="awake-banner hidden"></div>
+
+    <main class="layout">
+      <div class="table-wrap">
+        <div class="table"><div id="center" class="table-center"></div></div>
+        <div id="seats" class="seats"></div>
+      </div>
+
+      <aside class="panel">
+        <div id="myRole" class="role-card"></div>
+        <div class="box log-box">
+          <h3>Voqealar</h3>
+          <ul id="log"></ul>
+        </div>
+        <div class="box chat-box">
+          <h3 id="chatTitle">Suhbat</h3>
+          <ul id="chatList"></ul>
+          <form id="chatForm">
+            <input id="chatInput" maxlength="200" autocomplete="off" placeholder="Xabar yozing...">
+            <button class="btn" type="submit">➤</button>
+          </form>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Tun: uyg'oq bo'lmaganlarning ekrani qorong'ulashadi -->
+    <div id="nightOverlay" class="night-overlay hidden">
+      <div class="stars"></div>
+      <div class="sleep">
+        <div class="eyes">😴</div>
+        <h2>Ko'zingizni yuming...</h2>
+        <p class="sleep-sub">Shahar uxlamoqda</p>
+        <p id="nightStep" class="night-step"></p>
+        <p id="nightTimer" class="night-timer"></p>
+      </div>
+    </div>
+
+    <!-- Rol kartasi -->
+    <div id="roleModal" class="modal hidden">
+      <div class="modal-card">
+        <p class="modal-top">Sizning rolingiz</p>
+        <div id="roleModalIcon" class="big-icon"></div>
+        <h2 id="roleModalName"></h2>
+        <p id="roleModalDesc"></p>
+        <p id="roleModalTeam" class="team-line"></p>
+        <button id="roleModalClose" class="btn primary">Tushundim</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>

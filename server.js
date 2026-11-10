@@ -1,0 +1,140 @@
+'use strict';
+const path = require('path');
+const http = require('http');
+const crypto = require('crypto');
+const express = require('express');
+const { Server } = require('socket.io');
+const { Room, ROLES, MAX_PLAYERS } = require('./game');
+
+const PORT = process.env.PORT || 3000;
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/healthz', (req, res) => res.send('ok')); // Render tekshiruvi uchun
+const server = http.createServer(app);
+const io = new Server(server);
+
+/** code -> Room */
+const rooms = new Map();
+
+function newCode() {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code;
+  do {
+    code = Array.from({ length: 5 }, () => abc[crypto.randomInt(abc.length)]).join('');
+  } while (rooms.has(code));
+  return code;
+}
+
+function cleanName(name) {
+  return String(name || '').replace(/\s+/g, ' ').trim().slice(0, 16);
+}
+
+/** Hamma chiqib ketgan xonani 10 daqiqadan keyin o'chiramiz */
+function scheduleCleanup(room) {
+  clearTimeout(room.cleanupTimer);
+  if (room.players.some((p) => p.connected)) return;
+  room.cleanupTimer = setTimeout(() => {
+    if (!room.players.some((p) => p.connected)) {
+      clearTimeout(room.timer);
+      rooms.delete(room.code);
+    }
+  }, 10 * 60 * 1000);
+}
+
+function attach(socket, room, player) {
+  socket.data.room = room;
+  socket.data.player = player;
+  player.socketId = socket.id;
+  player.connected = true;
+  if (!room.hostId || !room.players.some((q) => q.id === room.hostId && q.connected)) room.hostId = player.id;
+  clearTimeout(player.leaveTimer);
+  clearTimeout(room.cleanupTimer);
+  socket.emit('chatHistory', room.chatHistoryFor(player));
+  room.broadcast();
+}
+
+io.on('connection', (socket) => {
+  socket.emit('roles', ROLES);
+
+  socket.on('create', ({ name } = {}, cb) => {
+    if (typeof cb !== 'function') cb = () => {};
+    name = cleanName(name);
+    if (!name) return cb({ error: 'Ismingizni kiriting' });
+    const room = new Room(newCode(), io);
+    rooms.set(room.code, room);
+    const p = room.addPlayer(name, socket.id);
+    cb({ code: room.code, token: p.token });
+    attach(socket, room, p);
+  });
+
+  socket.on('join', ({ code, name } = {}, cb) => {
+    if (typeof cb !== 'function') cb = () => {};
+    name = cleanName(name);
+    const room = rooms.get(String(code || '').toUpperCase().trim());
+    if (!name) return cb({ error: 'Ismingizni kiriting' });
+    if (!room) return cb({ error: 'Bunday xona topilmadi' });
+    if (room.phase !== 'lobby') return cb({ error: "Bu xonada o'yin allaqachon boshlangan" });
+    if (room.players.length >= MAX_PLAYERS) return cb({ error: "Stol to'la" });
+    if (room.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
+      return cb({ error: 'Bu ism band, boshqasini tanlang' });
+    }
+    const p = room.addPlayer(name, socket.id);
+    cb({ code: room.code, token: p.token });
+    attach(socket, room, p);
+  });
+
+  // Sahifa yangilansa yoki internet uzilib qolsa — o'sha o'ringa qaytish
+  socket.on('resume', ({ code, token } = {}, cb) => {
+    if (typeof cb !== 'function') cb = () => {};
+    const room = rooms.get(code);
+    const p = room && room.players.find((q) => q.token === token);
+    if (!p) return cb({ error: 'Sessiya topilmadi' });
+    cb({ code: room.code, token: p.token });
+    attach(socket, room, p);
+  });
+
+  // Har bir hodisa xatolardan himoyalangan: noto'g'ri xabar serverni yiqitmasin
+  const withPlayer = (fn) => (...args) => {
+    const { room, player } = socket.data;
+    if (!room || !player || !room.players.includes(player)) return;
+    try { fn(room, player, ...args); } catch (e) { console.error('Xato:', e); }
+  };
+
+  socket.on('start', withPlayer((room, p, ...args) => {
+    const cb = args.find((a) => typeof a === 'function');
+    const err = room.start(p);
+    if (cb) cb({ error: err });
+  }));
+  socket.on('act', withPlayer((room, p, targetId) => room.act(p, targetId)));
+  socket.on('vote', withPlayer((room, p, targetId) => room.vote(p, targetId)));
+  socket.on('ready', withPlayer((room, p) => room.toggleReady(p)));
+  socket.on('chat', withPlayer((room, p, text) => room.sendChat(p, text)));
+  socket.on('lobby', withPlayer((room, p) => room.backToLobby(p)));
+  socket.on('leave', withPlayer((room, p) => {
+    room.removePlayer(p);
+    socket.data = {};
+    scheduleCleanup(room);
+  }));
+
+  socket.on('disconnect', withPlayer((room, p) => {
+    if (p.socketId !== socket.id) return;
+    p.connected = false;
+    p.socketId = null;
+    if (room.hostId === p.id) {
+      const next = room.players.find((q) => q.connected);
+      if (next) room.hostId = next.id;
+    }
+    // Lobbida 20 soniya ichida qaytmasa — stoldan turadi
+    if (room.phase === 'lobby') {
+      p.leaveTimer = setTimeout(() => {
+        if (!p.connected && room.players.includes(p)) room.removePlayer(p);
+      }, 20000);
+    }
+    room.broadcast();
+    scheduleCleanup(room);
+  }));
+});
+
+server.listen(PORT, () => {
+  console.log(`🌙 Mafia serveri ishga tushdi: http://localhost:${PORT}`);
+});
