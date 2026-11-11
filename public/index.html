@@ -59,6 +59,9 @@
           <input id="codeInput" maxlength="5" placeholder="KOD" autocomplete="off">
           <button id="joinBtn" class="btn neon">Qo'shilish</button>
         </div>
+        <div id="passRow" class="pass-row hidden">
+          <input id="passInput" type="password" maxlength="20" placeholder="🔒 Stol paroli" autocomplete="off">
+        </div>
         <p id="homeError" class="error"></p>
       </div>
       <p class="hint">Kamida 5 kishi · har kim o'z telefonidan kiradi</p>
@@ -177,6 +180,34 @@
       <div class="settings-actions">
         <button id="avatarCancel" class="btn">Bekor qilish</button>
         <button id="avatarSave" class="btn primary">Saqlash</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- O'yin yakunidagi xulosa ("sud xronikasi") -->
+  <div id="recapModal" class="modal hidden">
+    <div class="modal-card glass recap-card">
+      <div class="recap-mast"><span>Yakuniy son</span><b>SUD XRONIKASI</b><span id="recapDate"></span></div>
+      <h2 class="recap-title">📜 O'yin xulosasi</h2>
+      <p id="recapWinner" class="recap-winner"></p>
+      <h3 class="recap-h">Kim kim edi</h3>
+      <div id="recapRoster" class="recap-roster"></div>
+      <h3 class="recap-h">Voqealar tasmasi</h3>
+      <div id="recapTimeline" class="recap-timeline"></div>
+      <div class="settings-actions"><button id="recapClose" class="btn primary">Yopish</button></div>
+    </div>
+  </div>
+
+  <!-- Xona egasi uchun: o'yinchi menyusi -->
+  <div id="playerModal" class="modal hidden">
+    <div class="modal-card glass player-card">
+      <div id="playerModalAvatar" class="avatar-xl"></div>
+      <h2 id="playerModalName"></h2>
+      <p id="playerModalInfo" class="set-note"></p>
+      <div class="player-actions">
+        <button id="pmHost" class="btn">👑 Xona egaligini berish</button>
+        <button id="pmKick" class="btn danger">🚪 Stoldan chiqarish</button>
+        <button id="pmClose" class="btn ghost">Yopish</button>
       </div>
     </div>
   </div>

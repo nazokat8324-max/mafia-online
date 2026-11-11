@@ -38,7 +38,7 @@ body.phase-roles    { --accent: var(--pink);   --accent2: var(--violet); }
 body.phase-night    { --accent: var(--blue);   --accent2: var(--violet); }
 body.phase-morning, body.phase-day { --accent: var(--cyan); --accent2: var(--pink); }
 body.phase-lastWord { --accent: var(--amber);  --accent2: var(--pink); }
-body.phase-vote, body.phase-voteResult { --accent: var(--red); --accent2: var(--pink); }
+body.phase-vote, body.phase-voteResult, body.phase-defense, body.phase-verdict { --accent: var(--red); --accent2: var(--pink); }
 body.phase-gameover { --accent: var(--green);  --accent2: var(--cyan); }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -1038,3 +1038,113 @@ html[data-theme="noir"] .fx-foot {
 html[data-theme="noir"] .fx-vote .fx-title, html[data-theme="noir"] .fx-lose .fx-title { color: var(--red); }
 
 html[data-theme="noir"] .toast { border-radius: 2px; background: #0e0d0c; border-color: var(--paper); box-shadow: 4px 4px 0 #000; font-family: var(--type); font-weight: 400; }
+
+
+/* ═══════════════════════════════════════════════════════════
+   O'ZINI OQLASH · O'YIN XULOSASI · XONA EGASI MENYUSI
+   ═══════════════════════════════════════════════════════════ */
+.pass-row { margin-top: 8px; }
+.pass-row input { width: 100%; text-align: center; letter-spacing: 2px; }
+.pass-input { width: 150px; }
+.host-hint { font-size: 11px !important; color: var(--muted) !important; opacity: .8; }
+
+/* ayblanuvchi: qizil "sahna chirog'i" */
+.seat.accused { z-index: 2; opacity: 1; filter: none; }
+.seat.accused .avatar { border-color: var(--red); animation: accused 1.2s ease-in-out infinite; transform: scale(1.12); }
+.seat.accused .tag { color: #ff8fa3; font-weight: 700; }
+@keyframes accused { 50% { box-shadow: 0 0 0 6px rgba(255, 59, 92, .35), 0 0 40px var(--red); } }
+#chatList li.defense { background: rgba(255, 59, 92, .14); font-style: italic; }
+#chatList li.defense b { color: var(--red); }
+
+.verdict-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.verdict-btns .btn { min-width: 130px; }
+.verdict-yes.on { background: linear-gradient(120deg, var(--red), #a1122e); border-color: transparent; color: #fff; box-shadow: 0 0 22px rgba(255, 59, 92, .55); }
+.verdict-no.on { background: linear-gradient(120deg, var(--green), #1aa36a); border-color: transparent; color: #052; box-shadow: 0 0 22px rgba(57, 255, 159, .5); }
+.verdict-count { font-size: 12px !important; color: var(--muted) !important; }
+.verdict-result { display: flex; gap: 16px; justify-content: center; font-family: var(--display); font-size: 20px; font-weight: 800; }
+.verdict-result .vy { color: var(--red); text-shadow: 0 0 12px var(--red); }
+.verdict-result .vn { color: var(--green); text-shadow: 0 0 12px var(--green); }
+
+/* xulosa */
+.recap-card { max-width: 620px; text-align: left; max-height: calc(100dvh - 32px); overflow-y: auto; }
+.recap-mast { display: none; }
+.recap-title { text-align: center; }
+.recap-winner { text-align: center; font-weight: 700; margin: -4px 0 14px; color: #fff; }
+.recap-h { margin: 16px 0 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); font-family: var(--display); }
+.recap-roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 6px; }
+.rr {
+  --c: var(--violet);
+  display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center;
+  padding: 6px 8px; border-radius: 12px; background: rgba(255, 255, 255, .045); border-left: 3px solid var(--cyan);
+}
+.rr.t-mafia { border-left-color: var(--red); background: rgba(255, 59, 92, .09); }
+.rr.t-maniac { border-left-color: var(--violet); }
+.rr.t-jester { border-left-color: var(--amber); }
+.rr.dead { opacity: .6; }
+.rr-av {
+  grid-row: span 2; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 18px;
+  border: 2px solid var(--c); background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--c) 45%, #000), #0b0a1a 75%);
+}
+.rr-name { font-weight: 700; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rr-role { font-size: 12px; color: var(--muted); }
+.recap-timeline { display: grid; gap: 10px; }
+.rt { border-radius: 14px; padding: 10px 12px; background: rgba(255, 255, 255, .04); border: 1px solid var(--stroke); }
+.rt.night { border-left: 3px solid var(--blue); }
+.rt.day { border-left: 3px solid var(--cyan); }
+.rt h4 { margin: 0 0 6px; font-family: var(--display); letter-spacing: 1px; font-size: 13px; }
+.rt ul { display: grid; gap: 4px; font-size: 13.5px; line-height: 1.4; }
+.rt li.sum { margin-top: 4px; padding-top: 6px; border-top: 1px dashed var(--stroke); font-weight: 600; }
+.rt .cnt { color: var(--muted); }
+.rp { font-weight: 700; }
+.rp.t-mafia { color: #ff7a90; }
+.rp.t-maniac { color: #c4a6ff; }
+.rp.t-jester { color: var(--amber); }
+.rt em { font-style: normal; font-weight: 700; }
+.rt em.hit { color: #ff7a90; }
+.rt em.good { color: var(--green); }
+
+/* xona egasi menyusi */
+.player-card .avatar-xl { margin: 0 auto 12px; cursor: default; }
+.player-card h2 { margin-bottom: 6px; }
+.player-actions { display: grid; gap: 8px; margin-top: 14px; }
+
+/* ── NOIR: sud xronikasi ── */
+html[data-theme="noir"] .verdict-yes.on { background: var(--red); color: var(--paper); box-shadow: 3px 3px 0 #000; }
+html[data-theme="noir"] .verdict-no.on { background: var(--paper); color: var(--ink); box-shadow: 3px 3px 0 #000; }
+html[data-theme="noir"] .verdict-result { font-family: var(--head); font-weight: 900; }
+html[data-theme="noir"] .verdict-result .vy, html[data-theme="noir"] .verdict-result .vn { text-shadow: none; }
+html[data-theme="noir"] .verdict-result .vn { color: var(--paper); }
+html[data-theme="noir"] .seat.accused .avatar { box-shadow: 0 0 0 4px #0b0a09, 0 0 0 7px var(--red), 0 0 40px rgba(200, 16, 46, .7); }
+html[data-theme="noir"] .recap-card {
+  color: var(--ink); border: 1px solid #b9ad92; border-radius: 2px;
+  background: repeating-linear-gradient(180deg, transparent 0 27px, rgba(22, 19, 15, .06) 27px 28px), radial-gradient(ellipse at 30% 10%, #f3ecdb, #d9cfb6 85%);
+  box-shadow: 0 30px 70px #000, inset 0 0 50px rgba(120, 90, 40, .25);
+}
+html[data-theme="noir"] .recap-mast {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  border-top: 3px double var(--ink); border-bottom: 3px double var(--ink); padding: 5px 0; margin-bottom: 10px;
+  font-family: var(--type); font-size: 11px; text-transform: uppercase;
+}
+html[data-theme="noir"] .recap-mast b { font-family: var(--head); font-weight: 900; font-size: clamp(18px, 5vw, 28px); letter-spacing: 2px; }
+html[data-theme="noir"] .recap-title { display: none; }
+html[data-theme="noir"] .recap-winner { color: var(--red); font-family: var(--head); font-weight: 900; font-size: 18px; text-transform: uppercase; }
+html[data-theme="noir"] .recap-h { color: var(--ink); font-family: var(--head); font-weight: 900; font-size: 13px; border-bottom: 1px solid rgba(22, 19, 15, .4); padding-bottom: 4px; }
+html[data-theme="noir"] .rr { background: rgba(22, 19, 15, .05); border-radius: 0; border-left-color: rgba(22, 19, 15, .5); }
+html[data-theme="noir"] .rr.t-mafia { border-left-color: var(--red); background: rgba(200, 16, 46, .08); }
+html[data-theme="noir"] .rr-av { border-color: var(--ink); background: #2a2622; }
+html[data-theme="noir"] .rr-av .av-face { filter: grayscale(1) contrast(1.2); }
+html[data-theme="noir"] .rr-name { font-family: var(--head); }
+html[data-theme="noir"] .rr-role { color: #4a4236; font-family: var(--type); }
+html[data-theme="noir"] .rt { background: transparent; border: 0; border-left: 3px solid rgba(22, 19, 15, .5); border-radius: 0; font-family: var(--type); }
+html[data-theme="noir"] .rt.night { border-left-color: var(--ink); }
+html[data-theme="noir"] .rt.day { border-left-color: var(--red); }
+html[data-theme="noir"] .rt h4 { font-family: var(--head); font-weight: 900; text-transform: uppercase; color: var(--ink); }
+html[data-theme="noir"] .rt ul { color: #2c261e; }
+html[data-theme="noir"] .rt li.sum { border-top-color: rgba(22, 19, 15, .3); }
+html[data-theme="noir"] .rp { font-family: var(--head); color: var(--ink); }
+html[data-theme="noir"] .rp.t-mafia { color: var(--red); }
+html[data-theme="noir"] .rp.t-maniac { color: #5a4a7a; }
+html[data-theme="noir"] .rp.t-jester { color: #8a6a10; }
+html[data-theme="noir"] .rt em.hit { color: var(--red); }
+html[data-theme="noir"] .rt em.good { color: #1f6b3a; }
+html[data-theme="noir"] .player-card .avatar-xl { filter: grayscale(1); }

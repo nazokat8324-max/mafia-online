@@ -79,7 +79,7 @@ io.on('connection', (socket) => {
     attach(socket, room, p);
   });
 
-  socket.on('join', ({ code, name, avatar } = {}, cb) => {
+  socket.on('join', ({ code, name, avatar, password } = {}, cb) => {
     if (typeof cb !== 'function') cb = () => {};
     name = cleanName(name);
     const room = rooms.get(String(code || '').toUpperCase().trim());
@@ -87,6 +87,10 @@ io.on('connection', (socket) => {
     if (!room) return cb({ error: 'Bunday xona topilmadi' });
     if (room.phase !== 'lobby') return cb({ error: "Bu xonada o'yin allaqachon boshlangan" });
     if (room.players.length >= MAX_PLAYERS) return cb({ error: "Stol to'la" });
+    if (room.kickedNames.has(name.toLowerCase())) return cb({ error: 'Xona egasi sizni bu stoldan chiqargan' });
+    if (room.password && String(password || '').trim() !== room.password) {
+      return cb({ error: password ? "Parol noto'g'ri" : 'Bu stol parol bilan himoyalangan', needPassword: true });
+    }
     if (room.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
       return cb({ error: 'Bu ism band, boshqasini tanlang' });
     }
@@ -120,6 +124,15 @@ io.on('connection', (socket) => {
   socket.on('act', withPlayer((room, p, targetId) => room.act(p, targetId)));
   socket.on('vote', withPlayer((room, p, targetId) => room.vote(p, targetId)));
   socket.on('skip', withPlayer((room, p) => room.skip(p)));
+  socket.on('endDefense', withPlayer((room, p) => room.endDefense(p)));
+  socket.on('verdict', withPlayer((room, p, yes) => room.castVerdict(p, yes)));
+  socket.on('transferHost', withPlayer((room, p, id) => room.transferHost(p, id)));
+  socket.on('kick', withPlayer((room, p, id) => {
+    const sid = room.kick(p, id);
+    const target = sid && io.sockets.sockets.get(sid);
+    if (target) { target.data = {}; target.emit('kicked'); }
+    scheduleCleanup(room);
+  }));
   socket.on('ready', withPlayer((room, p) => room.toggleReady(p)));
   socket.on('settings', withPlayer((room, p, s) => room.updateSettings(p, s)));
   socket.on('endLastWord', withPlayer((room, p) => room.endLastWord(p)));
