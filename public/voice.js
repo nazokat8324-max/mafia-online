@@ -40,7 +40,7 @@ const Voice = (() => {
     } catch (e) {
       micStream = null;
       micTrack = null;
-      onChange("Mikrofonga ruxsat berilmadi — siz faqat tinglaysiz");
+      onChange('voice.denied'); // tarjima kaliti
     }
     enabled = true;
     muted = false;

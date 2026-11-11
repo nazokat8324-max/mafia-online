@@ -34,21 +34,24 @@
   <!-- ───────── BOSH SAHIFA ───────── -->
   <section id="home" class="screen">
     <div class="home-wrap">
-      <div class="theme-switch" role="group" aria-label="Uslub">
-        <button type="button" data-theme-pick="neon">✦ Neon</button>
-        <button type="button" data-theme-pick="noir">🎩 Noir</button>
+      <div class="home-top">
+        <div class="theme-switch" role="group" aria-label="Neon / Noir">
+          <button type="button" data-theme-pick="neon">✦ Neon</button>
+          <button type="button" data-theme-pick="noir">🎩 Noir</button>
+        </div>
+        <select class="lang-select" data-lang-select aria-label="Til / Язык / Language"></select>
       </div>
       <h1 class="logo" aria-label="Mafia">
         <span>M</span><span>A</span><span class="flicker">F</span><span>I</span><span>A</span>
       </h1>
-      <p class="tagline">Tun tushganda — ko'zlar yumiladi</p>
+      <p class="tagline" data-i18n="home.tagline"></p>
 
       <div class="glass home-card">
         <div class="profile">
-          <button type="button" id="avatarPreview" class="avatar-xl" title="Avatarni tanlang"></button>
+          <button type="button" id="avatarPreview" class="avatar-xl" data-i18n-title="home.avatarTitle"></button>
           <label class="field">
-            <span>Ismingiz</span>
-            <input id="nameInput" maxlength="16" placeholder="Masalan: Sarvar" autocomplete="off">
+            <span data-i18n="home.nameLabel"></span>
+            <input id="nameInput" maxlength="16" data-i18n-ph="home.namePh" autocomplete="off">
           </label>
         </div>
 
@@ -57,24 +60,29 @@
           <div id="colorRow" class="color-row"></div>
         </div>
 
-        <button id="createBtn" class="btn primary wide">✦ Yangi stol ochish</button>
+        <button id="createBtn" class="btn primary wide" data-i18n="home.create"></button>
 
-        <div class="divider"><span>yoki do'stingiz stoliga</span></div>
+        <div class="divider"><span data-i18n="home.or"></span></div>
 
         <div class="row">
-          <input id="codeInput" maxlength="5" placeholder="KOD" autocomplete="off">
-          <button id="joinBtn" class="btn neon">Qo'shilish</button>
+          <input id="codeInput" maxlength="5" data-i18n-ph="home.codePh" autocomplete="off">
+          <button id="joinBtn" class="btn neon" data-i18n="home.join"></button>
         </div>
         <div id="passRow" class="pass-row hidden">
-          <input id="passInput" type="password" maxlength="20" placeholder="🔒 Stol paroli" autocomplete="off">
+          <input id="passInput" type="password" maxlength="20" data-i18n-ph="home.passPh" autocomplete="off">
         </div>
         <p id="homeError" class="error"></p>
-        <button id="spectateBtn" class="btn neon wide hidden">👁️ Tomosha qilish</button>
+        <button id="spectateBtn" class="btn neon wide hidden" data-i18n="home.spectate"></button>
       </div>
-      <p class="hint">Kamida 5 kishi · har kim o'z telefonidan kiradi · kam bo'lsa — botlar qo'shiladi</p>
+
+      <div class="glass public-box">
+        <h3 data-i18n="pub.title"></h3>
+        <ul id="publicList" class="public-list"></ul>
+      </div>
+      <p class="hint" data-i18n="home.hint"></p>
       <p id="serverNote" class="server-note hidden"></p>
-      <button id="installBtn" class="btn install-btn hidden">📲 Ilovani telefonga o'rnatish</button>
-      <p id="iosHint" class="ios-hint hidden">📲 Ilova qilib o'rnatish: Safari'da <b>Ulashish ⬆️</b> → <b>«Bosh ekranga qo'shish»</b></p>
+      <button id="installBtn" class="btn install-btn hidden" data-i18n="home.install"></button>
+      <p id="iosHint" class="ios-hint hidden" data-i18n-html="home.iosHint"></p>
     </div>
   </section>
 
@@ -82,21 +90,21 @@
   <section id="game" class="screen hidden">
     <header class="topbar glass">
       <div class="room">
-        <span class="room-label">Stol</span> <b id="roomCode"></b>
-        <button id="copyBtn" class="btn tiny" title="Taklif havolasini nusxalash">🔗<span class="hide-sm"> Taklif</span></button>
-        <span id="specCount" class="spec-count hidden" title="Tomoshabinlar"></span>
+        <span class="room-label" data-i18n="game.table"></span> <b id="roomCode"></b>
+        <button id="copyBtn" class="btn tiny" data-i18n-title="game.copyTitle">🔗<span class="hide-sm" data-i18n="game.invite"></span></button>
+        <span id="specCount" class="spec-count hidden" data-i18n-title="game.specTitle"></span>
       </div>
       <div id="phaseLabel" class="phase-label"></div>
       <div class="top-right">
         <div id="timerRing" class="timer-ring"><span id="timer" class="timer"></span></div>
-        <button id="themeBtn" class="btn tiny ghost icon-btn" title="Uslubni almashtirish: Neon / Noir">🎨</button>
-        <button id="soundBtn" class="btn tiny ghost icon-btn" title="Ovoz: hammasi / faqat effektlar / o'chiq">🔊</button>
-        <button id="leaveBtn" class="btn tiny ghost icon-btn" title="Chiqish">✕</button>
+        <button id="themeBtn" class="btn tiny ghost icon-btn" data-i18n-title="game.themeTitle">🎨</button>
+        <button id="soundBtn" class="btn tiny ghost icon-btn" data-i18n-title="game.soundTitle">🔊</button>
+        <button id="leaveBtn" class="btn tiny ghost icon-btn" data-i18n-title="game.leaveTitle">✕</button>
       </div>
     </header>
 
     <div id="awakeBanner" class="awake-banner hidden"></div>
-    <div id="specBanner" class="spec-banner hidden">👁️ Siz tomoshabinsiz — o'yin tugagach stolga o'tirasiz</div>
+    <div id="specBanner" class="spec-banner hidden" data-i18n="game.specBanner"></div>
 
     <main class="layout">
       <div class="table-wrap">
@@ -105,7 +113,7 @@
         <div id="reactLayer" class="react-layer" aria-hidden="true"></div>
         <div id="reactDock" class="react-dock hidden">
           <div id="reactMenu" class="react-menu glass hidden"></div>
-          <button type="button" id="reactBtn" class="react-btn glass" title="Reaksiya yuborish">😀</button>
+          <button type="button" id="reactBtn" class="react-btn glass" data-i18n-title="game.reactTitle">😀</button>
         </div>
       </div>
 
@@ -114,25 +122,26 @@
           <div id="myRole" class="role-card glass"></div>
           <div id="voiceBox" class="box glass voice-box"></div>
           <details class="box glass prefs-box">
-            <summary>⚙️ Mening sozlamalarim</summary>
-            <div class="pref-row"><span>Uslub</span>
+            <summary data-i18n="prefs.title"></summary>
+            <div class="pref-row"><span data-i18n="prefs.lang"></span><select class="lang-select" data-lang-select></select></div>
+            <div class="pref-row"><span data-i18n="prefs.theme"></span>
               <div class="seg mini"><button type="button" data-theme-pick="neon">✦ Neon</button><button type="button" data-theme-pick="noir">🎩 Noir</button></div>
             </div>
           </details>
         </div>
         <div class="pane" data-pane="log">
           <div class="box glass log-box">
-            <h3>📜 Voqealar</h3>
+            <h3 data-i18n="log.title"></h3>
             <ul id="log"></ul>
           </div>
         </div>
         <div class="pane" data-pane="chat">
           <div class="box glass chat-box">
-            <h3 id="chatTitle">Suhbat</h3>
+            <h3 id="chatTitle"></h3>
             <ul id="chatList"></ul>
             <form id="chatForm">
-              <input id="chatInput" maxlength="200" autocomplete="off" placeholder="Xabar yozing...">
-              <button class="btn primary send" type="submit" aria-label="Yuborish">➤</button>
+              <input id="chatInput" maxlength="200" autocomplete="off" >
+              <button class="btn primary send" type="submit" data-i18n-aria="chat.send">➤</button>
             </form>
           </div>
         </div>
@@ -141,9 +150,9 @@
 
     <!-- Telefon uchun pastki tablar -->
     <nav id="tabs" class="tabs glass">
-      <button type="button" data-tab="me" class="active">🎭<span>Men</span></button>
-      <button type="button" data-tab="log">📜<span>Voqealar</span><i class="dot" id="logDot"></i></button>
-      <button type="button" data-tab="chat">💬<span>Chat</span><i class="dot" id="chatDot"></i></button>
+      <button type="button" data-tab="me" class="active">🎭<span data-i18n="tabs.me"></span></button>
+      <button type="button" data-tab="log">📜<span data-i18n="tabs.log"></span><i class="dot" id="logDot"></i></button>
+      <button type="button" data-tab="chat">💬<span data-i18n="tabs.chat"></span><i class="dot" id="chatDot"></i></button>
     </nav>
 
     <!-- Tun: uyg'oq bo'lmaganlarning ekrani qorong'ulashadi -->
@@ -152,8 +161,8 @@
       <div class="moon-glow"></div>
       <div class="sleep">
         <div class="eyes">😴</div>
-        <h2>Ko'zingizni yuming...</h2>
-        <p class="sleep-sub">Shahar uxlamoqda</p>
+        <h2 data-i18n="night.close"></h2>
+        <p class="sleep-sub" data-i18n="night.sleeps"></p>
         <p id="nightStep" class="night-step"></p>
         <p id="nightTimer" class="night-timer"></p>
       </div>
@@ -165,16 +174,16 @@
         <div class="flip-inner">
           <div class="face back">
             <div class="back-logo">M</div>
-            <p class="back-hint">Kartangizni ochish uchun bosing</p>
+            <p class="back-hint" data-i18n="card.flipHint"></p>
           </div>
           <div class="face front" id="roleFront">
-            <div class="stamp">MAXFIY</div>
-            <p class="modal-top">Sizning rolingiz</p>
+            <div class="stamp" data-i18n="card.stamp"></div>
+            <p class="modal-top" data-i18n="card.yourRole"></p>
             <div id="roleModalIcon" class="big-icon"></div>
             <h2 id="roleModalName"></h2>
             <p id="roleModalDesc"></p>
             <p id="roleModalTeam" class="team-line"></p>
-            <button id="roleModalClose" class="btn primary">Tushundim</button>
+            <button id="roleModalClose" class="btn primary" data-i18n="card.ok"></button>
           </div>
         </div>
       </div>
@@ -184,11 +193,11 @@
   <!-- Xona sozlamalari (faqat xona egasi uchun) -->
   <div id="settingsModal" class="modal hidden">
     <div class="modal-card glass settings-card">
-      <h2>⚙️ Stol sozlamalari</h2>
+      <h2 data-i18n="set.title"></h2>
       <div id="settingsBody"></div>
       <div class="settings-actions">
-        <button id="settingsCancel" class="btn">Bekor qilish</button>
-        <button id="settingsSave" class="btn primary">Saqlash</button>
+        <button id="settingsCancel" class="btn" data-i18n="common.cancel"></button>
+        <button id="settingsSave" class="btn primary" data-i18n="common.save"></button>
       </div>
     </div>
   </div>
@@ -196,13 +205,13 @@
   <!-- Lobbida avatarni almashtirish -->
   <div id="avatarModal" class="modal hidden">
     <div class="modal-card glass avatar-card">
-      <h2>Avataringiz</h2>
+      <h2 data-i18n="avatar.title"></h2>
       <div id="avatarModalPreview" class="avatar-xl"></div>
       <div id="emojiGrid2" class="emoji-grid"></div>
       <div id="colorRow2" class="color-row"></div>
       <div class="settings-actions">
-        <button id="avatarCancel" class="btn">Bekor qilish</button>
-        <button id="avatarSave" class="btn primary">Saqlash</button>
+        <button id="avatarCancel" class="btn" data-i18n="common.cancel"></button>
+        <button id="avatarSave" class="btn primary" data-i18n="common.save"></button>
       </div>
     </div>
   </div>
@@ -210,14 +219,14 @@
   <!-- O'yin yakunidagi xulosa ("sud xronikasi") -->
   <div id="recapModal" class="modal hidden">
     <div class="modal-card glass recap-card">
-      <div class="recap-mast"><span>Yakuniy son</span><b>SUD XRONIKASI</b><span id="recapDate"></span></div>
-      <h2 class="recap-title">📜 O'yin xulosasi</h2>
+      <div class="recap-mast"><span data-i18n="recap.issue"></span><b data-i18n="recap.mast"></b><span id="recapDate"></span></div>
+      <h2 class="recap-title" data-i18n="recap.title"></h2>
       <p id="recapWinner" class="recap-winner"></p>
-      <h3 class="recap-h">Kim kim edi</h3>
+      <h3 class="recap-h" data-i18n="recap.who"></h3>
       <div id="recapRoster" class="recap-roster"></div>
-      <h3 class="recap-h">Voqealar tasmasi</h3>
+      <h3 class="recap-h" data-i18n="recap.timeline"></h3>
       <div id="recapTimeline" class="recap-timeline"></div>
-      <div class="settings-actions"><button id="recapClose" class="btn primary">Yopish</button></div>
+      <div class="settings-actions"><button id="recapClose" class="btn primary" data-i18n="common.close"></button></div>
     </div>
   </div>
 
@@ -228,9 +237,9 @@
       <h2 id="playerModalName"></h2>
       <p id="playerModalInfo" class="set-note"></p>
       <div class="player-actions">
-        <button id="pmHost" class="btn">👑 Xona egaligini berish</button>
-        <button id="pmKick" class="btn danger">🚪 Stoldan chiqarish</button>
-        <button id="pmClose" class="btn ghost">Yopish</button>
+        <button id="pmHost" class="btn" data-i18n="pm.host"></button>
+        <button id="pmKick" class="btn danger"></button>
+        <button id="pmClose" class="btn ghost" data-i18n="common.close"></button>
       </div>
     </div>
   </div>
@@ -241,6 +250,7 @@
 
   <div id="toast" class="toast hidden"></div>
 
+  <script src="i18n.js"></script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="sound.js"></script>
   <script src="voice.js"></script>
