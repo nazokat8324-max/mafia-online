@@ -254,6 +254,7 @@ const Voice = (() => {
     get hasMic() { return !!micTrack; },
     get mode() { return mode; },
     get canSpeak() { return allowedTo.size > 0; },
+    talkingIds: () => [...talking],
     get supported() { return !!(window.RTCPeerConnection && navigator.mediaDevices); },
     debug: () => ({ peers: [...peers.values()].map((p) => ({ id: p.id, state: p.pc.connectionState, sending: !!p.sentTrack, mutedIn: p.audio.muted })), talking: [...talking] }),
   };

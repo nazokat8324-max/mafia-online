@@ -68,18 +68,18 @@ io.on('connection', (socket) => {
   socket.emit('roles', ROLES);
   socket.emit('ice', ICE_SERVERS);
 
-  socket.on('create', ({ name } = {}, cb) => {
+  socket.on('create', ({ name, avatar } = {}, cb) => {
     if (typeof cb !== 'function') cb = () => {};
     name = cleanName(name);
     if (!name) return cb({ error: 'Ismingizni kiriting' });
     const room = new Room(newCode(), io);
     rooms.set(room.code, room);
-    const p = room.addPlayer(name, socket.id);
+    const p = room.addPlayer(name, socket.id, avatar);
     cb({ code: room.code, token: p.token });
     attach(socket, room, p);
   });
 
-  socket.on('join', ({ code, name } = {}, cb) => {
+  socket.on('join', ({ code, name, avatar } = {}, cb) => {
     if (typeof cb !== 'function') cb = () => {};
     name = cleanName(name);
     const room = rooms.get(String(code || '').toUpperCase().trim());
@@ -90,7 +90,7 @@ io.on('connection', (socket) => {
     if (room.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
       return cb({ error: 'Bu ism band, boshqasini tanlang' });
     }
-    const p = room.addPlayer(name, socket.id);
+    const p = room.addPlayer(name, socket.id, avatar);
     cb({ code: room.code, token: p.token });
     attach(socket, room, p);
   });
@@ -125,6 +125,7 @@ io.on('connection', (socket) => {
   socket.on('endLastWord', withPlayer((room, p) => room.endLastWord(p)));
   socket.on('chat', withPlayer((room, p, text) => room.sendChat(p, text)));
   socket.on('lobby', withPlayer((room, p) => room.backToLobby(p)));
+  socket.on('avatar', withPlayer((room, p, a) => room.setAvatar(p, a)));
 
   // Ovozli chat: qo'shilish/chiqish va WebRTC signallarini uzatish
   socket.on('voice', withPlayer((room, p, on) => room.setVoice(p, on)));

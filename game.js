@@ -56,6 +56,19 @@ const WINNERS = {
   jester: "🤡 Suid g'alaba qozondi! Shahar uni o'z qo'li bilan chiqarib yubordi.",
 };
 
+// Avatar: emoji (qisqa matn) + rang raqami (0–7)
+const AVATAR_COLORS = 8;
+function cleanAvatar(a) {
+  const e = a && typeof a.e === 'string' ? a.e.trim() : '';
+  // Faqat emoji: harf, raqam, bo'shliq va HTML belgilari taqiqlanadi
+  const okEmoji = e && e.length <= 8 && !/[<>&"'\s\w]/.test(e);
+  const c = a ? Math.floor(Number(a.c)) : NaN;
+  return {
+    e: okEmoji ? e : null,
+    c: c >= 0 && c < AVATAR_COLORS ? c : crypto.randomInt(AVATAR_COLORS),
+  };
+}
+
 const isMafia = (p) => !!p && !!ROLES[p.role] && ROLES[p.role].team === 'mafia';
 
 // ───────── ROLLAR TAQSIMOTI VA SOZLAMALAR ─────────
@@ -200,8 +213,9 @@ class Room {
   note(p, text) { this.addLog(text, 'private', p.id); }
 
   // ───────── o'yinchilar ─────────
-  addPlayer(name, socketId) {
+  addPlayer(name, socketId, avatar) {
     const p = {
+      avatar: cleanAvatar(avatar),
       id: crypto.randomUUID(),
       token: crypto.randomBytes(16).toString('hex'),
       name, socketId, connected: true,
@@ -237,6 +251,12 @@ class Room {
       const next = this.players.find((q) => q.connected);
       this.hostId = next ? next.id : null;
     }
+    this.broadcast();
+  }
+
+  setAvatar(p, avatar) {
+    if (this.inGame()) return;
+    p.avatar = cleanAvatar(avatar);
     this.broadcast();
   }
 
@@ -669,7 +689,7 @@ class Room {
     const players = this.players.map((q, seat) => {
       const showRole = q.id === p.id || over || (!q.alive && reveal) || (meMafia && isMafia(q));
       const v = {
-        id: q.id, name: q.name, seat, alive: q.alive, connected: q.connected,
+        id: q.id, name: q.name, seat, alive: q.alive, connected: q.connected, avatar: q.avatar,
         role: showRole && q.role ? q.role : null,
         known: p.known[q.id] || null,
         votes: voteCounts[q.id] || 0,
