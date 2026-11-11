@@ -10,7 +10,7 @@ const { ROLES } = require('../game');
 const PORT = 3999;
 const URL = `http://localhost:${PORT}`;
 
-const ALL_ROLES = { don: 1, mafia: 2, lawyer: 1, commissar: 1, doctor: 1, lover: 1, bum: 1, sniper: 1, maniac: 1, jester: 1 };
+const ALL_ROLES = { don: 1, mafia: 2, lawyer: 1, commissar: 1, doctor: 1, lover: 1, bum: 1, sniper: 1, guard: 1, kamikadze: 1, wizard: 1, maniac: 1, jester: 1 };
 const SCENARIOS = [
   { n: 5, title: 'avto' },
   { n: 6, title: "avto, o'zini oqlashsiz", settings: { defense: false } },
@@ -18,8 +18,8 @@ const SCENARIOS = [
   { n: 11, title: 'avto' },
   { n: 14, title: 'avto, rollar yashirin', settings: { revealRoles: false } },
   { n: 16, title: 'avto' },
-  { n: 13, title: "qo'lda: barcha rollar", settings: { mode: 'custom', custom: ALL_ROLES } },
-  { n: 13, title: "qo'lda, yashirin", settings: { mode: 'custom', custom: ALL_ROLES, revealRoles: false, dayTime: 60, voteTime: 20, nightTime: 15 } },
+  { n: 16, title: "qo'lda: barcha rollar", settings: { mode: 'custom', custom: ALL_ROLES } },
+  { n: 16, title: "qo'lda, yashirin", settings: { mode: 'custom', custom: ALL_ROLES, revealRoles: false, dayTime: 60, voteTime: 20, nightTime: 15 } },
 ];
 
 const server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
@@ -31,11 +31,15 @@ const fail = (msg) => { console.error('❌', msg); server.kill(); process.exit(1
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const team = (r) => r && ROLES[r].team;
 
-const seen = { roles: new Set(), skip: 0, lastWord: 0, bumNote: 0, jesterWin: 0, defense: 0, verdict: 0, acquitted: 0, history: 0 };
+const seen = { reactions: 0, roles: new Set(), skip: 0, lastWord: 0, bumNote: 0, jesterWin: 0, defense: 0, verdict: 0, acquitted: 0, history: 0 };
 
 function bot(name, ctx) {
   const s = io(URL, { forceNew: true, transports: ['websocket'] });
   s.botName = name;
+  s.on('reaction', (r) => {
+    seen.reactions++;
+    if (s.last && ['night', 'roles'].includes(s.last.phase)) fail(`${name} tunda reaksiya oldi: ${r.e}`);
+  });
   s.on('state', (st) => {
     s.last = st;
     const me = st.me;
@@ -82,6 +86,7 @@ function bot(name, ctx) {
     if (st.phase === 'day' && me.alive && !s.readySent && Math.random() < 0.3) { s.readySent = true; s.emit('ready'); }
     if (st.phase !== 'day') s.readySent = false;
     if (Math.random() < 0.05 && me.chat) s.emit('chat', 'salom');
+    if (Math.random() < 0.04 && st.reactions) s.emit('react', pick(st.reactions)); // tunda ham urinadi — server rad etishi kerak
   });
   return s;
 }
@@ -198,6 +203,8 @@ server.stdout.once('data', async () => {
     if (missing.length) fail(`Bu rollar hech qachon chiqmadi: ${missing.join(', ')}`);
     if (!seen.lastWord) fail("Oxirgi so'z hech qachon ishlamadi");
     if (!seen.defense || !seen.verdict) fail("O'zini oqlash / yakuniy ovoz hech qachon ishlamadi");
+    if (!seen.reactions) fail('Reaksiyalar hech qachon yetib bormadi');
+    console.log(`Reaksiyalar: ${seen.reactions} ta yetkazildi (tunda — 0)`);
     console.log(`O'zini oqlash: ${seen.defense} marta · yakuniy ovozlar: ${seen.verdict} · oqlanganlar bor: ${seen.acquitted ? 'ha' : "yo'q"} · xulosalar: ${seen.history}`);
     console.log(`\nBarcha ${seen.roles.size} rol o'ynaldi · oxirgi so'z: ${seen.lastWord} marta · Snayper o'q uzmadi: ${seen.skip} marta · Daydi xabarlari: ${seen.bumNote > 0 ? 'bor' : "yo'q"} · Suid g'alabasi: ${seen.jesterWin}`);
     console.log('Hammasi joyida ✔');

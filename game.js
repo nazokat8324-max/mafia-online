@@ -35,6 +35,9 @@ const ROLES = {
   bum:       { name: 'Daydi',       team: 'town',   icon: '🧥', desc: "Har tun kimningdir uyi yonida tunaysiz va ertalab o'sha uyga tunda kim kelganini bilib olasiz." },
   sniper:    { name: 'Snayper',     team: 'town',   icon: '🎯', desc: "Butun o'yin davomida bitta o'qingiz bor. Istalgan tunda kimnidir otib tashlashingiz mumkin — adashmang!" },
   maniac:    { name: 'Manyak',      team: 'maniac', icon: '🔪', desc: "Yolg'iz o'ynaysiz. Har tun bir kishini o'ldirasiz. Oxirgi ikki tirik odamdan biri bo'lsangiz — g'olibsiz." },
+  guard:     { name: "Qo'riqchi",   team: 'town',   icon: '🛡️', desc: "Har tun bir kishini qo'riqlaysiz. Unga hujum bo'lsa — zarba sizga tegadi: u tirik qoladi, siz esa halok bo'lasiz." },
+  kamikadze: { name: 'Kamikadze',   team: 'town',   icon: '💣', desc: "Bitta bombangiz bor. Istalgan tunda kimnidir tanlab, u bilan birga portlaysiz. Mafiyani topsangiz — shahar qahramonisiz!" },
+  wizard:    { name: 'Sehrgar',     team: 'town',   icon: '🔮', desc: "Har tun bir kishiga «ko'zgu» sehrini solasiz: shu tun unga qilingan hujum hujumchining o'ziga qaytadi. Bir odamni ketma-ket ikki tun sehrlay olmaysiz." },
   jester:    { name: 'Suid',        team: 'jester', icon: '🤡', desc: "Maqsadingiz — kunduzi ovoz bilan shahardan chiqarilish. Shunday bo'lsa, o'yin darhol tugaydi va siz yutasiz." },
 };
 
@@ -46,7 +49,10 @@ const NIGHT_STEPS = [
   { key: 'lawyer',    roles: ['lawyer'],       title: "Advokat uyg'ondi",  prompt: 'Qaysi sherigingizni himoya qilasiz?' },
   { key: 'maniac',    roles: ['maniac'],       title: "Manyak uyg'ondi",   prompt: "Bu tun kimni o'ldirasiz?" },
   { key: 'sniper',    roles: ['sniper'],       title: "Snayper uyg'ondi",  prompt: "Yagona o'qingizni uzasizmi?", skippable: true },
+  { key: 'kamikadze', roles: ['kamikadze'],    title: "Kamikadze uyg'ondi", prompt: 'Kim bilan birga portlaysiz?', skippable: true },
   { key: 'bum',       roles: ['bum'],          title: "Daydi uyg'ondi",    prompt: 'Bu tun kimning uyi yonida tunaysiz?' },
+  { key: 'guard',     roles: ['guard'],        title: "Qo'riqchi uyg'ondi", prompt: "Bu tun kimni qo'riqlaysiz?" },
+  { key: 'wizard',    roles: ['wizard'],       title: "Sehrgar uyg'ondi",  prompt: "Kimga ko'zgu sehrini solasiz?" },
   { key: 'doctor',    roles: ['doctor'],       title: "Shifokor uyg'ondi", prompt: 'Bu tun kimni davolaysiz?' },
   { key: 'commissar', roles: ['commissar'],    title: "Komissar uyg'ondi", prompt: 'Kimni tekshirasiz?' },
 ];
@@ -71,6 +77,9 @@ function cleanAvatar(a) {
   };
 }
 
+// Muhokama paytidagi reaksiyalar
+const REACTIONS = ['🤔', '😱', '👀', '🤥', '😂', '👍', '👎', '🙏'];
+
 const isMafia = (p) => !!p && !!ROLES[p.role] && ROLES[p.role].team === 'mafia';
 
 // ───────── ROLLAR TAQSIMOTI VA SOZLAMALAR ─────────
@@ -85,14 +94,14 @@ const AUTO_ORDER = [
   'mafia',   // 10
   'lawyer',  // 11
   'jester',  // 12
-  'citizen', // 13
+  'guard',   // 13
   'mafia',   // 14
   'sniper',  // 15
-  'citizen', // 16
+  'wizard',  // 16
 ];
 
 // Qo'lda rejimda tanlanadigan rollar (mafia — soni, qolganlari 0 yoki 1)
-const CUSTOM_ROLES = ['don', 'mafia', 'lawyer', 'commissar', 'doctor', 'lover', 'bum', 'sniper', 'maniac', 'jester'];
+const CUSTOM_ROLES = ['don', 'mafia', 'lawyer', 'commissar', 'doctor', 'lover', 'bum', 'sniper', 'guard', 'kamikadze', 'wizard', 'maniac', 'jester'];
 
 const OPTIONS = {
   dayTime: [0, 60, 90, 120, 180],  // 0 = avtomatik (tiriklar soniga qarab)
@@ -102,7 +111,7 @@ const OPTIONS = {
 
 const DEFAULT_SETTINGS = {
   mode: 'auto',
-  custom: { don: 1, mafia: 1, lawyer: 0, commissar: 1, doctor: 1, lover: 1, bum: 0, sniper: 0, maniac: 0, jester: 0 },
+  custom: { don: 1, mafia: 1, lawyer: 0, commissar: 1, doctor: 1, lover: 1, bum: 0, sniper: 0, guard: 0, kamikadze: 0, wizard: 0, maniac: 0, jester: 0 },
   dayTime: 0,
   nightTime: 20,
   voteTime: 30,
@@ -327,7 +336,7 @@ class Room {
       p.role = roles[i];
       p.alive = true;
       p.known = {};
-      p.bullets = p.role === 'sniper' ? 1 : 0;
+      p.bullets = p.role === 'sniper' || p.role === 'kamikadze' ? 1 : 0;
     });
     // Mafiya a'zolari bir-birini taniydi
     const mafia = this.players.filter(isMafia);
@@ -336,6 +345,7 @@ class Room {
     this.round = 0;
     this.winner = null;
     this.lastHeal = null;
+    this.lastMirror = null;
     this.history = [];
     this.accusedId = null;
     this.lastVerdict = null;
@@ -373,7 +383,7 @@ class Room {
   /** Bu qadamda haqiqatan harakat qila oladiganlar */
   ableActors() {
     return this.stepActors().filter((a) => a.connected && a.id !== this.night.blocked &&
-      !(a.role === 'sniper' && a.bullets <= 0));
+      !((a.role === 'sniper' || a.role === 'kamikadze') && a.bullets <= 0));
   }
 
   nextStep() {
@@ -396,7 +406,7 @@ class Room {
   canAct(p) {
     if (this.phase !== 'night' || !this.step || this.stepLocked || !p.alive) return false;
     if (!this.step.roles.includes(p.role) || this.night.blocked === p.id) return false;
-    if (p.role === 'sniper' && p.bullets <= 0) return false;
+    if ((p.role === 'sniper' || p.role === 'kamikadze') && p.bullets <= 0) return false;
     return this.step.key === 'mafia' || !this.night.done.has(this.step.key);
   }
 
@@ -411,6 +421,7 @@ class Room {
       if (k === 'mafia' || k === 'don') return !isMafia(q);
       if (k === 'lawyer') return isMafia(q);
       if (k === 'doctor') return q.id !== this.lastHeal;
+      if (k === 'wizard') return q.id !== p.id && q.id !== this.lastMirror;
       return q.id !== p.id;
     }).map((q) => q.id);
   }
@@ -456,6 +467,16 @@ class Room {
       case 'bum':
         this.note(p, `🧥 Siz bu tun ${t.name}ning uyi yonida tunayapsiz...`);
         break;
+      case 'kamikadze':
+        p.bullets--;
+        this.note(p, `💣 Siz ${t.name} bilan birga portlashga qaror qildingiz. Alvido, qahramon!`);
+        break;
+      case 'guard':
+        this.note(p, `🛡️ Siz bu tun ${t.name}ni qo'riqlayapsiz.`);
+        break;
+      case 'wizard':
+        this.note(p, `🔮 Siz ${t.name}ga ko'zgu sehrini soldingiz.`);
+        break;
       case 'doctor':
         this.note(p, `💉 Siz bu tun ${t.name}ni davolayapsiz.`);
         break;
@@ -500,23 +521,60 @@ class Room {
     this.step = null;
     const n = this.night;
     const mt = this.mafiaTarget();
-    const victims = new Set([mt, n.maniac, n.sniper].filter(Boolean));
 
-    let saved = false;
-    if (n.doctor && victims.has(n.doctor)) {
-      victims.delete(n.doctor);
-      saved = true;
+    // Hujumlar ro'yxati: kim kimga
+    const attacks = [];
+    if (mt) {
+      const don = this.players.find((q) => q.role === 'don' && q.alive);
+      const attacker = don && n.mafiaVotes[don.id] === mt ? don.id
+        : Object.keys(n.mafiaVotes).find((id) => n.mafiaVotes[id] === mt) || null;
+      attacks.push({ kind: 'mafia', by: attacker, t: mt });
+    }
+    if (n.maniac) attacks.push({ kind: 'maniac', by: n.actors.maniac, t: n.maniac });
+    if (n.sniper) attacks.push({ kind: 'sniper', by: n.actors.sniper, t: n.sniper });
+    if (n.kamikadze) attacks.push({ kind: 'kamikadze', by: n.actors.kamikadze, t: n.kamikadze });
+
+    // Har bir hujum: 1) Shifokor davolasa — tirik; 2) Sehrgar ko'zgusi — hujumchi o'ladi;
+    // 3) Qo'riqchi qo'riqlasa — qo'riqchi o'ladi; 4) aks holda nishon o'ladi
+    const victims = new Set();
+    if (n.kamikadze) victims.add(n.actors.kamikadze); // bomba egasi har doim halok bo'ladi
+    let saved = false, guarded = false, mirrored = false;
+    const guardId = n.guard ? n.actors.guard : null;
+    for (const a of attacks) {
+      if (a.t === n.doctor) { saved = true; continue; }
+      if (a.t === n.wizard && a.by) {
+        mirrored = true;
+        if (a.by !== n.doctor) victims.add(a.by);
+        continue;
+      }
+      if (guardId && a.t === n.guard && guardId !== a.t) {
+        guarded = true;
+        if (guardId !== n.doctor) victims.add(guardId);
+        continue;
+      }
+      victims.add(a.t);
+    }
+    if (saved) {
       const doc = this.byId(n.actors.doctor);
       if (doc) this.note(doc, '💉 Siz bu tun hayotni saqlab qoldingiz!');
     }
+    if (guarded) {
+      const gp = this.byId(guardId);
+      if (gp) this.note(gp, "🛡️ Siz qo'riqlagan odamga hujum bo'ldi — siz uni o'z joningiz evaziga qutqardingiz.");
+    }
+    if (mirrored) {
+      const wz = this.byId(n.actors.wizard);
+      if (wz) this.note(wz, '🔮 Sehringiz ishladi: hujum egasining o\'ziga qaytdi!');
+    }
     this.lastHeal = n.doctor || null;
+    this.lastMirror = n.wizard || null;
 
     // Daydi: kuzatgan uyiga kim kelganini bilib oladi
     if (n.bum) {
       const bum = this.byId(n.actors.bum);
       const house = this.byId(n.bum);
       const visitors = new Set();
-      for (const key of ['lover', 'don', 'lawyer', 'maniac', 'sniper', 'doctor', 'commissar']) {
+      for (const key of ['lover', 'don', 'lawyer', 'maniac', 'sniper', 'kamikadze', 'guard', 'wizard', 'doctor', 'commissar']) {
         if (n[key] === n.bum && n.actors[key] && n.actors[key] !== bum.id) visitors.add(this.byId(n.actors[key]).name);
       }
       if (mt === n.bum) {
@@ -540,6 +598,9 @@ class Room {
     if (n.lawyer) ev.push({ k: 'lawyer', by: by('lawyer'), t: n.lawyer });
     if (n.maniac) ev.push({ k: 'maniac', by: by('maniac'), t: n.maniac });
     if (n.sniper) ev.push({ k: 'sniper', by: by('sniper'), t: n.sniper });
+    if (n.kamikadze) ev.push({ k: 'kamikadze', by: by('kamikadze'), t: n.kamikadze });
+    if (n.guard) ev.push({ k: 'guard', by: by('guard'), t: n.guard, used: guarded });
+    if (n.wizard) ev.push({ k: 'wizard', by: by('wizard'), t: n.wizard, used: mirrored });
     if (n.bum) ev.push({ k: 'bum', by: by('bum'), t: n.bum });
     if (n.doctor) ev.push({ k: 'doctor', by: by('doctor'), t: n.doctor, saved });
     if (n.commissar && n.comRes) ev.push({ k: 'commissar', by: by('commissar'), t: n.commissar, res: n.comRes.res, fooled: n.comRes.fooled });
@@ -551,7 +612,10 @@ class Room {
     } else {
       this.addLog("Bu tun hech kim o'lmadi.", 'day');
     }
+    if (n.kamikadze) this.addLog('💥 Tunda shaharda portlash yangradi!', 'day');
     if (saved) this.addLog("💉 Shifokor kimnidir o'limdan qutqarib qoldi!", 'day');
+    if (guarded) this.addLog("🛡️ Kimdir o'zini qurbon qilib, boshqani qutqardi!", 'day');
+    if (mirrored) this.addLog("🔮 Sehr kuchi bilan hujum egasining o'ziga qaytdi!", 'day');
 
     this.phase = 'morning';
     const w = this.checkWin();
@@ -777,6 +841,22 @@ class Room {
     };
   }
 
+  // ───────── REAKSIYALAR ─────────
+  canReact(p) {
+    if (['night', 'roles'].includes(this.phase)) return false; // tunda — uyg'oq rollar o'zini fosh qilmasin
+    return !this.inGame() || p.alive;
+  }
+
+  react(p, emoji) {
+    if (!REACTIONS.includes(emoji) || !this.canReact(p)) return;
+    const now = Date.now();
+    if (p.lastReact && now - p.lastReact < 1200) return; // tez-tez bosishdan himoya
+    p.lastReact = now;
+    for (const q of this.players) {
+      if (q.socketId) this.io.to(q.socketId).emit('reaction', { id: p.id, e: emoji });
+    }
+  }
+
   // ───────── CHAT ─────────
   chatChannel(p) {
     if (!this.inGame()) return 'all';
@@ -878,7 +958,7 @@ class Room {
         blocked: awake && this.night.blocked === p.id,
         canAct: awake && this.canAct(p),
         canSkip: awake && this.canAct(p) && !!this.step.skippable,
-        noBullets: awake && p.role === 'sniper' && p.bullets <= 0,
+        noBullets: awake && (p.role === 'sniper' || p.role === 'kamikadze') && p.bullets <= 0,
         prompt: awake ? this.step.prompt : null,
         targets,
         myTarget,
@@ -888,7 +968,9 @@ class Room {
         canVerdict: this.phase === 'verdict' && p.alive && p.id !== this.accusedId,
         myVerdict: this.phase === 'verdict' && p.id in this.verdicts ? this.verdicts[p.id] : null,
         voice: this.voiceFor(p),
+        canReact: this.canReact(p),
       },
+      reactions: REACTIONS,
       log: this.log.filter((l) => l.to === null || l.to === p.id).slice(-60),
     };
   }

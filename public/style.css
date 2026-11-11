@@ -1148,3 +1148,76 @@ html[data-theme="noir"] .rp.t-jester { color: #8a6a10; }
 html[data-theme="noir"] .rt em.hit { color: var(--red); }
 html[data-theme="noir"] .rt em.good { color: #1f6b3a; }
 html[data-theme="noir"] .player-card .avatar-xl { filter: grayscale(1); }
+
+
+/* ═══════════════════════════════════════════════════════════
+   REAKSIYALAR · MENING SOZLAMALARIM · OVOZLI CHAT QO'SHIMCHALARI
+   ═══════════════════════════════════════════════════════════ */
+.react-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.float-react {
+  position: absolute; transform: translate(-50%, -100%);
+  font-size: clamp(26px, 4vw, 40px); line-height: 1;
+  animation: floatReact 2.1s ease-out forwards;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .6));
+}
+@keyframes floatReact {
+  0% { opacity: 0; transform: translate(-50%, -60%) scale(.3); }
+  15% { opacity: 1; transform: translate(-50%, -110%) scale(1.25); }
+  30% { transform: translate(-50%, -120%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -260%) scale(.9); }
+}
+.react-dock { position: absolute; left: 1.5%; bottom: 1.5%; z-index: 6; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.react-btn {
+  width: 46px; height: 46px; border-radius: 50%; font-size: 24px; cursor: pointer; padding: 0;
+  display: grid; place-items: center; transition: transform .15s;
+}
+.react-btn:hover { transform: scale(1.1) rotate(-8deg); }
+.react-menu { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px; border-radius: 16px; max-width: min(330px, 86vw); animation: popIn .2s ease; }
+.react-menu button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: transparent; font-size: 22px; cursor: pointer; transition: transform .12s, background .2s; }
+.react-menu button:hover { background: rgba(255, 255, 255, .1); transform: scale(1.2); }
+
+.prefs-box .pref-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-size: 14px; }
+.prefs-box .pref-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+.seg.mini { padding: 2px; border-radius: 10px; }
+.seg.mini button { padding: 5px 10px; font-size: 12.5px; border-radius: 8px; }
+.prefs-box .seg.mini button.on, .v-mode button.on { background: linear-gradient(120deg, var(--accent), var(--accent2)); color: #fff; }
+[data-theme-pick].on { background: linear-gradient(120deg, var(--accent), var(--accent2)); color: #fff; }
+
+.v-mode { margin-bottom: 10px; }
+.ptt-btn {
+  width: 100%; padding: 16px; margin-bottom: 4px; font-size: 15px; user-select: none; -webkit-user-select: none; touch-action: none;
+  border-style: dashed;
+}
+.ptt-btn.held { border-style: solid; border-color: var(--green); background: rgba(57, 255, 159, .15); box-shadow: 0 0 22px rgba(57, 255, 159, .45); }
+.ptt-hint { margin: 0 0 10px !important; font-size: 12px !important; }
+.v-vols { margin-top: 10px; font-size: 13.5px; }
+.v-vols summary { cursor: pointer; color: var(--muted); }
+.v-vol-list { display: grid; gap: 6px; margin-top: 8px; }
+.vol-row { display: grid; grid-template-columns: 1fr 1.4fr; align-items: center; gap: 10px; }
+.vol-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vol-row input[type=range] { width: 100%; accent-color: var(--accent); padding: 0; }
+
+@media (max-width: 900px) {
+  .react-btn { width: 40px; height: 40px; font-size: 21px; }
+  .react-menu button { width: 34px; height: 34px; font-size: 20px; }
+}
+
+/* ── NOIR ── */
+html[data-theme="noir"] .react-btn { border-radius: 2px; }
+html[data-theme="noir"] .react-menu { border-radius: 2px; }
+html[data-theme="noir"] .float-react { filter: grayscale(1) contrast(1.2) drop-shadow(2px 2px 0 #000); }
+html[data-theme="noir"] .react-menu button { filter: grayscale(1) contrast(1.15); }
+html[data-theme="noir"] .prefs-box .seg.mini button.on, html[data-theme="noir"] .v-mode button.on,
+html[data-theme="noir"] [data-theme-pick].on { background: var(--red); color: var(--paper); }
+html[data-theme="noir"] .ptt-btn.held { border-color: var(--amber); background: rgba(212, 175, 55, .12); box-shadow: 3px 3px 0 #000; }
+
+/* Mening sozlamalarim — yig'iladigan; kompyuterda Men bo'limi joy yetmasa qisqaradi */
+.prefs-box summary { cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); font-family: var(--display); list-style: none; }
+.prefs-box summary::-webkit-details-marker { display: none; }
+.prefs-box summary::after { content: " ▾"; }
+.prefs-box[open] summary { margin-bottom: 8px; }
+.prefs-box[open] summary::after { content: " ▴"; }
+html[data-theme="noir"] .prefs-box summary { font-family: var(--display); color: var(--paper); letter-spacing: 3px; font-size: 13px; }
+@media (min-width: 901px) {
+  .pane[data-pane="me"] { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+}

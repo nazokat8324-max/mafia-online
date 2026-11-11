@@ -18,6 +18,11 @@ const Voice = (() => {
   let allowedTo = new Set();
   let allowedFrom = new Set();
   let mode = 'all';
+  // "Bosib gapirish" rejimi: mikrofon faqat tugma bosib turilganda uzatiladi
+  let ptt = false;
+  try { ptt = localStorage.getItem('mafia-ptt') === '1'; } catch {}
+  let pttHeld = false;
+  const volumes = new Map(); // playerId -> 0..1
 
   const peers = new Map();  // playerId -> peer
   let actx = null;
@@ -58,6 +63,27 @@ const Voice = (() => {
     talking.clear();
     try { sessionStorage.removeItem('mafia-voice'); } catch {}
     onChange();
+  }
+
+  function setPtt(on) {
+    ptt = !!on;
+    pttHeld = false;
+    try { localStorage.setItem('mafia-ptt', ptt ? '1' : '0'); } catch {}
+    applyGates();
+    onChange();
+  }
+
+  function holdTalk(down) {
+    if (!ptt || pttHeld === !!down) return;
+    pttHeld = !!down;
+    applyGates();
+    onChange();
+  }
+
+  function setVolume(id, vol) {
+    volumes.set(id, Math.max(0, Math.min(1, vol)));
+    const peer = peers.get(id);
+    if (peer) peer.audio.volume = volumes.get(id);
   }
 
   function toggleMute() {
@@ -180,12 +206,13 @@ const Voice = (() => {
 
   // ───────── kim kimni eshitadi ─────────
   function applyGate(peer) {
-    const send = allowedTo.has(peer.id) && !muted && micTrack ? micTrack : null;
+    const send = allowedTo.has(peer.id) && !muted && (!ptt || pttHeld) && micTrack ? micTrack : null;
     if (peer.sender && peer.sentTrack !== send) {
       peer.sentTrack = send;
       peer.sender.replaceTrack(send).catch(() => {});
     }
     peer.audio.muted = !allowedFrom.has(peer.id);
+    peer.audio.volume = volumes.has(peer.id) ? volumes.get(peer.id) : 1;
   }
   function applyGates() { for (const peer of peers.values()) applyGate(peer); }
 
@@ -221,7 +248,7 @@ const Voice = (() => {
     for (const [key, m] of meters) {
       const id = key === 'me' ? myId : key;
       let on = level(m) > 0.04;
-      if (id === myId) on = on && !muted && allowedTo.size > 0;
+      if (id === myId) on = on && !muted && (!ptt || pttHeld) && allowedTo.size > 0;
       else on = on && allowedFrom.has(id);
       const seat = document.querySelector(`.seat[data-id="${id}"]`);
       if (seat) seat.classList.toggle('talking', on);
@@ -248,7 +275,10 @@ const Voice = (() => {
   }
 
   return {
-    init, join, leave, toggleMute, sync,
+    init, join, leave, toggleMute, sync, setPtt, holdTalk, setVolume,
+    get ptt() { return ptt; },
+    get pttHeld() { return pttHeld; },
+    volumeOf: (id) => (volumes.has(id) ? volumes.get(id) : 1),
     get enabled() { return enabled; },
     get muted() { return muted; },
     get hasMic() { return !!micTrack; },

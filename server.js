@@ -124,6 +124,7 @@ io.on('connection', (socket) => {
   socket.on('act', withPlayer((room, p, targetId) => room.act(p, targetId)));
   socket.on('vote', withPlayer((room, p, targetId) => room.vote(p, targetId)));
   socket.on('skip', withPlayer((room, p) => room.skip(p)));
+  socket.on('react', withPlayer((room, p, e) => room.react(p, e)));
   socket.on('endDefense', withPlayer((room, p) => room.endDefense(p)));
   socket.on('verdict', withPlayer((room, p, yes) => room.castVerdict(p, yes)));
   socket.on('transferHost', withPlayer((room, p, id) => room.transferHost(p, id)));
