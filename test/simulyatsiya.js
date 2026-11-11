@@ -194,8 +194,65 @@ async function checkHostControls() {
   bots.forEach((b) => b.close());
 }
 
+async function checkBotsAndSpectators() {
+  const host = bot('Odam');
+  const other = bot('Begona');
+  await Promise.all([host, other].map((b) => new Promise((r) => b.on('connect', r))));
+  const { code } = await emit(host, 'create', { name: 'Odam' });
+  await emit(other, 'join', { name: 'Begona', code });
+  await waitState(host, (st) => st.players.length === 2);
+  other.emit('addBot');
+  await new Promise((r) => setTimeout(r, 300));
+  if (host.last.players.length !== 2) fail("Xost bo'lmagan o'yinchi bot qo'shdi");
+  other.emit('leave');
+  for (let i = 0; i < 4; i++) host.emit('addBot');
+  await waitState(host, (st) => st.players.length === 5 && st.players.filter((p) => p.bot).length === 4);
+  const botChats = [];
+  host.on('chat', (m) => { if (host.last.players.find((p) => p.id === m.fromId && p.bot)) botChats.push(m.text); });
+  const r = await emit(host, 'start');
+  if (r.error) fail(r.error);
+
+  // O'yin o'rtasida tomoshabin keladi
+  await waitState(host, (st) => st.phase === 'night');
+  const spec = io(URL, { forceNew: true, transports: ['websocket'] });
+  await new Promise((res) => spec.on('connect', res));
+  const j = await emit(spec, 'join', { name: 'Tomoshabin', code });
+  if (!j.canSpectate) fail("O'yin paytida tomosha taklifi kelmadi: " + JSON.stringify(j));
+  const specChats = [];
+  spec.on('chat', (m) => specChats.push(m));
+  spec.on('state', (st) => {
+    spec.last = st;
+    if (st.phase === 'gameover' || st.phase === 'lobby') return;
+    if (!st.me.spectator) fail('Tomoshabin belgisi yo\'q');
+    if (st.history) fail("Tomoshabin o'yin paytida xulosani ko'rdi");
+    if (st.me.targets.length) fail('Tomoshabin nishon tanlay oladi');
+    if (st.me.chat) fail('Tomoshabin chatga yoza oladi');
+    for (const p of st.players) if (p.alive && p.role) fail(`Tomoshabin tirik ${p.name} rolini ko'rdi`);
+    if (st.players.some((p) => p.mafiaPicks)) fail("Tomoshabin mafiya tanlovini ko'rdi");
+  });
+  const sp = await emit(spec, 'spectate', { name: 'Tomoshabin', code });
+  if (sp.error) fail('Tomosha qila olmadi: ' + sp.error);
+  await waitState(host, (st) => st.spectatorCount === 1);
+  spec.emit('chat', 'salom hammaga');
+  spec.emit('react', '😂');
+
+  await waitState(host, (st) => st.phase === 'gameover');
+  if (specChats.some((m) => m.channel === 'mafia')) fail("Tomoshabin mafiya chatini ko'rdi (o'yin paytida)");
+  if (specChats.some((m) => m.text === 'salom hammaga')) fail('Tomoshabin chatga yozib qo\'ydi');
+  if (!botChats.length) fail("Botlar chatda bir og'iz ham gapirmadi");
+  const w = host.last.log.find((l) => l.kind === 'win');
+  // Yangi o'yin: tomoshabin stolga o'tiradi
+  host.emit('lobby');
+  await waitState(spec, (st) => st.phase === 'lobby' && !st.me.spectator && st.players.some((p) => p.id === st.me.id));
+  console.log(`✅ 1 odam + 4 bot o'ynadi (${host.last.round} tun) — ${w.text}`);
+  console.log(`   botlar gapi: «${botChats.slice(0, 3).join('» · «')}»`);
+  console.log("✅ Tomoshabin: maxfiy hech narsa ko'rmadi, yoza olmadi, yangi o'yinda stolga o'tirdi");
+  [host, other, spec].forEach((b) => b.close());
+}
+
 server.stdout.once('data', async () => {
   try {
+    await checkBotsAndSpectators();
     await checkHostControls();
     await checkValidation();
     for (const sc of SCENARIOS) await playGame(sc);

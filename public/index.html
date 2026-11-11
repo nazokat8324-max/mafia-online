@@ -4,6 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#07060f">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mafia">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307060f'/%3E%3Ctext x='32' y='46' font-family='Arial Black,Arial' font-weight='900' font-size='40' text-anchor='middle' fill='%23ff2bd6'%3EM%3C/text%3E%3C/svg%3E">
   <title>Mafia — Tungi shahar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,8 +69,12 @@
           <input id="passInput" type="password" maxlength="20" placeholder="🔒 Stol paroli" autocomplete="off">
         </div>
         <p id="homeError" class="error"></p>
+        <button id="spectateBtn" class="btn neon wide hidden">👁️ Tomosha qilish</button>
       </div>
-      <p class="hint">Kamida 5 kishi · har kim o'z telefonidan kiradi</p>
+      <p class="hint">Kamida 5 kishi · har kim o'z telefonidan kiradi · kam bo'lsa — botlar qo'shiladi</p>
+      <p id="serverNote" class="server-note hidden"></p>
+      <button id="installBtn" class="btn install-btn hidden">📲 Ilovani telefonga o'rnatish</button>
+      <p id="iosHint" class="ios-hint hidden">📲 Ilova qilib o'rnatish: Safari'da <b>Ulashish ⬆️</b> → <b>«Bosh ekranga qo'shish»</b></p>
     </div>
   </section>
 
@@ -74,6 +84,7 @@
       <div class="room">
         <span class="room-label">Stol</span> <b id="roomCode"></b>
         <button id="copyBtn" class="btn tiny" title="Taklif havolasini nusxalash">🔗<span class="hide-sm"> Taklif</span></button>
+        <span id="specCount" class="spec-count hidden" title="Tomoshabinlar"></span>
       </div>
       <div id="phaseLabel" class="phase-label"></div>
       <div class="top-right">
@@ -85,6 +96,7 @@
     </header>
 
     <div id="awakeBanner" class="awake-banner hidden"></div>
+    <div id="specBanner" class="spec-banner hidden">👁️ Siz tomoshabinsiz — o'yin tugagach stolga o'tirasiz</div>
 
     <main class="layout">
       <div class="table-wrap">

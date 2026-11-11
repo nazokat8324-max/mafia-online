@@ -153,6 +153,7 @@ $('avatarPreview').onclick = () => {
 };
 
 function entered(res) {
+  $('spectateBtn').classList.toggle('hidden', !res.canSpectate);
   if (res.needPassword) {
     $('passRow').classList.remove('hidden');
     $('passInput').focus();
@@ -171,6 +172,7 @@ function getName() {
 }
 $('createBtn').onclick = () => socket.emit('create', { name: getName(), avatar: myAvatar }, entered);
 $('joinBtn').onclick = () => socket.emit('join', { name: getName(), code: $('codeInput').value, avatar: myAvatar, password: $('passInput').value }, entered);
+$('spectateBtn').onclick = () => socket.emit('spectate', { name: getName(), code: $('codeInput').value, avatar: myAvatar, password: $('passInput').value }, entered);
 $('passInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('joinBtn').click(); });
 $('codeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('joinBtn').click(); });
 $('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') ($('codeInput').value ? $('joinBtn') : $('createBtn')).click(); });
@@ -195,6 +197,7 @@ $('leaveBtn').onclick = () => {
 let avatarDraft = null;
 function openAvatarModal() {
   const me = state.players.find((p) => p.id === state.me.id);
+  if (!me) return; // tomoshabinning o'rni yo'q
   avatarDraft = { e: (me.avatar && me.avatar.e) || myAvatar.e, c: me.avatar ? me.avatar.c : myAvatar.c };
   avatarPicker($('emojiGrid2'), $('colorRow2'), $('avatarModalPreview'), () => avatarDraft, (a) => { avatarDraft = a; });
   $('avatarModal').classList.remove('hidden');
@@ -242,7 +245,21 @@ socket.on('kicked', () => {
   $('homeError').textContent = 'Xona egasi sizni stoldan chiqardi';
 });
 
+let wakeTimer = setTimeout(() => {
+  if (!socket.connected) {
+    $('serverNote').textContent = "⏳ Server uyg'onmoqda — bepul serverda bu 30–60 soniya olishi mumkin...";
+    $('serverNote').classList.remove('hidden');
+  }
+}, 2500);
+socket.on('connect_error', () => {
+  if (!navigator.onLine) {
+    $('serverNote').textContent = "📡 Internet yo'q. Ulanish tiklanishi bilan o'yin davom etadi.";
+    $('serverNote').classList.remove('hidden');
+  }
+});
 socket.on('connect', () => {
+  clearTimeout(wakeTimer);
+  $('serverNote').classList.add('hidden');
   const s = loadSession();
   if (!s) return;
   socket.emit('resume', s, (res) => {
@@ -623,6 +640,11 @@ function render() {
   const isNight = phase === 'night';
 
   setPhaseClass(phase);
+  document.body.classList.toggle('spectator', !!me.spectator);
+  $('specBanner').classList.toggle('hidden', !me.spectator);
+  $('voiceBox').classList.toggle('hidden', !!me.spectator);
+  $('specCount').classList.toggle('hidden', !state.spectatorCount);
+  $('specCount').textContent = `👁️ ${state.spectatorCount || 0}`;
   $('roomCode').textContent = state.code;
   $('phaseLabel').textContent = PHASES[phase] + (state.round && !['lobby', 'gameover'].includes(phase) ? ` · ${state.round}` : '');
 
@@ -649,7 +671,8 @@ function render() {
   const chatInput = $('chatInput');
   chatInput.disabled = !me.chat;
   $('chatTitle').textContent = me.chat === 'mafia' ? '🔫 Mafia suhbati (yashirin)' : '💬 Suhbat';
-  chatInput.placeholder = me.defense ? "O'zingizni oqlang..."
+  chatInput.placeholder = me.spectator && !me.chat ? 'Tomoshabinlar o\'yin paytida yoza olmaydi'
+    : me.defense ? "O'zingizni oqlang..."
     : phase === 'defense' ? 'Tinglang — ayblanuvchi gapirmoqda'
     : me.lastWord ? "Oxirgi so'zingizni yozing..."
     : me.chat
@@ -723,6 +746,7 @@ function renderSeats() {
     else if (p.known === 'notcommissar') tag = '⚪ Komissar emas';
     if (p.speaking) tag = "🕯️ Oxirgi so'z";
     if (p.accused) tag = '🎤 Ayblanuvchi';
+    if (!tag && p.bot) tag = '🤖 bot';
     if (!p.connected) tag += ' 📴';
     if (p.id === me.id && phase === 'lobby') tag = isMobile() ? '✎ avatar' : '✎ avatarni almashtirish';
 
@@ -787,6 +811,7 @@ function renderCenter() {
       ${state.rolesError ? `<p class="center-error">⚠️ ${esc(state.rolesError)}</p>` : ''}
       ${isHost
         ? `<div class="center-btns"><button class="btn" id="settingsBtn">⚙️ Sozlamalar</button>
+           <button class="btn" id="addBotBtn" ${n >= state.maxPlayers ? 'disabled' : ''}>🤖 Bot qo'shish</button>
            <button class="btn primary" id="startBtn" ${enough && !state.rolesError ? '' : 'disabled'}>▶ Boshlash</button></div>
            ${n > 1 ? '<p class="host-hint">O\'yinchini bossangiz — chiqarish yoki xostlikni berish</p>' : ''}`
         : '<p>👑 Xona egasi o\'yinni boshlashini kuting</p>'}`;
@@ -809,7 +834,8 @@ function renderCenter() {
         ? `<p>Siz gapirasiz! Chatga oxirgi so'zingizni yozing.</p><button class="btn primary" id="endWordBtn">Gapirib bo'ldim</button>`
         : `<p>${speakers} gapirmoqda. Tinglang...</p>`}`;
   } else if (phase === 'day') {
-    const ready = players.find((p) => p.id === me.id).ready;
+    const mine = players.find((p) => p.id === me.id); // tomoshabin stolda yo'q
+    const ready = !!(mine && mine.ready);
     html = `<h2>🗣️ Muhokama</h2><p>Kim mafiya? Gaplashing, dalil keltiring.</p>${lastLog}
       ${me.alive ? `<button class="btn ${ready ? '' : 'primary'}" id="readyBtn">${ready ? 'Bekor qilish' : 'Ovozga o\'tish'} (${state.readyCount}/${state.aliveCount})</button>` : ''}`;
   } else if (phase === 'defense') {
@@ -860,6 +886,8 @@ function renderCenter() {
   if (endWordBtn) endWordBtn.onclick = () => socket.emit('endLastWord');
   const settingsBtn = $('settingsBtn');
   if (settingsBtn) settingsBtn.onclick = openSettings;
+  const addBotBtn = $('addBotBtn');
+  if (addBotBtn) addBotBtn.onclick = () => { socket.emit('addBot'); Sound.play('select'); };
   const endDefenseBtn = $('endDefenseBtn');
   if (endDefenseBtn) endDefenseBtn.onclick = () => socket.emit('endDefense');
   const vYes = $('vYes');
@@ -953,7 +981,10 @@ function openPlayerMenu(id) {
   const inGame = !['lobby', 'gameover'].includes(state.phase);
   $('playerModalInfo').textContent = !p.connected ? '📴 Hozir aloqada emas'
     : inGame && p.alive ? "Diqqat: o'yin paytida chiqarilsa, u o'lgan hisoblanadi" : '';
-  $('pmHost').disabled = !p.connected;
+  $('pmHost').disabled = !p.connected || p.bot;
+  $('pmHost').classList.toggle('hidden', !!p.bot);
+  $('pmKick').textContent = p.bot ? '🗑️ Botni olib tashlash' : '🚪 Stoldan chiqarish';
+  if (p.bot) $('playerModalInfo').textContent = '🤖 Bu — kompyuter o\'yinchisi';
   $('playerModal').classList.remove('hidden');
 }
 $('pmHost').onclick = () => {
@@ -963,7 +994,7 @@ $('pmHost').onclick = () => {
 };
 $('pmKick').onclick = () => {
   const p = state.players.find((q) => q.id === menuPlayerId);
-  if (p && confirm(`${p.name}ni stoldan chiqarasizmi? U shu ism bilan qayta kira olmaydi.`)) socket.emit('kick', p.id);
+  if (p && (p.bot || confirm(`${p.name}ni stoldan chiqarasizmi? U shu ism bilan qayta kira olmaydi.`))) socket.emit('kick', p.id);
   $('playerModal').classList.add('hidden');
 };
 $('pmClose').onclick = () => $('playerModal').classList.add('hidden');
@@ -1048,6 +1079,12 @@ function renderRoleCard() {
   const { me } = state;
   const card = $('myRole');
   const role = me.role && ROLES[me.role];
+  if (me.spectator) {
+    card.style.removeProperty('--team');
+    setHTML(card, '<div class="icon">👁️</div><div><b>Tomoshabin</b><small>O\'yin tugagach, bo\'sh o\'rin bo\'lsa, stolga o\'tirasiz</small></div>');
+    card.onclick = null;
+    return;
+  }
   if (!role) {
     card.style.removeProperty('--team');
     setHTML(card, '<div class="icon">🪑</div><div><b>Rol hali yo\'q</b><small>O\'yin boshlanganda rolingizni olasiz</small></div>');
@@ -1128,3 +1165,29 @@ window.addEventListener('resize', () => {
   else setTab(activeTab);
 });
 if (!isMobile()) document.querySelectorAll('.pane').forEach((p) => p.classList.add('active'));
+
+
+// ───────── PWA: telefonga o'rnatish ─────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+let installPrompt = null;
+const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  if (!standalone) $('installBtn').classList.remove('hidden');
+});
+$('installBtn').onclick = async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice.catch(() => {});
+  installPrompt = null;
+  $('installBtn').classList.add('hidden');
+};
+window.addEventListener('appinstalled', () => {
+  $('installBtn').classList.add('hidden');
+  toast("📲 Ilova o'rnatildi! Endi uni bosh ekrandan oching.");
+});
+// iPhone/iPad'da o'rnatish tugmasi yo'q — yo'riqnoma ko'rsatamiz
+if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !standalone) $('iosHint').classList.remove('hidden');

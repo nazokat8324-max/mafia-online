@@ -41,11 +41,14 @@ function cleanName(name) {
 }
 
 /** Hamma chiqib ketgan xonani 10 daqiqadan keyin o'chiramiz */
+/** Xonada hech bo'lmasa bitta tirik odam (bot emas) bormi */
+const hasHumans = (room) => room.players.some((p) => p.connected && !p.bot) || room.spectators.some((p) => p.connected);
+
 function scheduleCleanup(room) {
   clearTimeout(room.cleanupTimer);
-  if (room.players.some((p) => p.connected)) return;
+  if (hasHumans(room)) return;
   room.cleanupTimer = setTimeout(() => {
-    if (!room.players.some((p) => p.connected)) {
+    if (!hasHumans(room)) {
       clearTimeout(room.timer);
       rooms.delete(room.code);
     }
@@ -57,7 +60,7 @@ function attach(socket, room, player) {
   socket.data.player = player;
   player.socketId = socket.id;
   player.connected = true;
-  if (!room.hostId || !room.players.some((q) => q.id === room.hostId && q.connected)) room.hostId = player.id;
+  if (!player.spectator && (!room.hostId || !room.players.some((q) => q.id === room.hostId && q.connected))) room.hostId = player.id;
   clearTimeout(player.leaveTimer);
   clearTimeout(room.cleanupTimer);
   socket.emit('chatHistory', room.chatHistoryFor(player));
@@ -85,13 +88,15 @@ io.on('connection', (socket) => {
     const room = rooms.get(String(code || '').toUpperCase().trim());
     if (!name) return cb({ error: 'Ismingizni kiriting' });
     if (!room) return cb({ error: 'Bunday xona topilmadi' });
-    if (room.phase !== 'lobby') return cb({ error: "Bu xonada o'yin allaqachon boshlangan" });
     if (room.players.length >= MAX_PLAYERS) return cb({ error: "Stol to'la" });
     if (room.kickedNames.has(name.toLowerCase())) return cb({ error: 'Xona egasi sizni bu stoldan chiqargan' });
     if (room.password && String(password || '').trim() !== room.password) {
       return cb({ error: password ? "Parol noto'g'ri" : 'Bu stol parol bilan himoyalangan', needPassword: true });
     }
-    if (room.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
+    if (room.phase !== 'lobby') {
+      return cb({ error: "Bu stolda o'yin ketmoqda — tomosha qilishingiz mumkin", canSpectate: true });
+    }
+    if ([...room.players, ...room.spectators].some((p) => p.name.toLowerCase() === name.toLowerCase())) {
       return cb({ error: 'Bu ism band, boshqasini tanlang' });
     }
     const p = room.addPlayer(name, socket.id, avatar);
@@ -99,11 +104,31 @@ io.on('connection', (socket) => {
     attach(socket, room, p);
   });
 
+  // O'yin ketayotgan stolni tomosha qilish
+  socket.on('spectate', ({ code, name, avatar, password } = {}, cb) => {
+    if (typeof cb !== 'function') cb = () => {};
+    name = cleanName(name);
+    const room = rooms.get(String(code || '').toUpperCase().trim());
+    if (!name) return cb({ error: 'Ismingizni kiriting' });
+    if (!room) return cb({ error: 'Bunday xona topilmadi' });
+    if (room.kickedNames.has(name.toLowerCase())) return cb({ error: 'Xona egasi sizni bu stoldan chiqargan' });
+    if (room.password && String(password || '').trim() !== room.password) {
+      return cb({ error: 'Bu stol parol bilan himoyalangan', needPassword: true });
+    }
+    if ([...room.players, ...room.spectators].some((p) => p.name.toLowerCase() === name.toLowerCase())) {
+      return cb({ error: 'Bu ism band, boshqasini tanlang' });
+    }
+    if (room.spectators.length >= 30) return cb({ error: "Tomoshabinlar uchun joy qolmadi" });
+    const sp = room.addSpectator(name, socket.id, avatar);
+    cb({ code: room.code, token: sp.token });
+    attach(socket, room, sp);
+  });
+
   // Sahifa yangilansa yoki internet uzilib qolsa — o'sha o'ringa qaytish
   socket.on('resume', ({ code, token } = {}, cb) => {
     if (typeof cb !== 'function') cb = () => {};
     const room = rooms.get(code);
-    const p = room && room.players.find((q) => q.token === token);
+    const p = room && [...room.players, ...room.spectators].find((q) => q.token === token);
     if (!p) return cb({ error: 'Sessiya topilmadi' });
     cb({ code: room.code, token: p.token });
     attach(socket, room, p);
@@ -112,7 +137,7 @@ io.on('connection', (socket) => {
   // Har bir hodisa xatolardan himoyalangan: noto'g'ri xabar serverni yiqitmasin
   const withPlayer = (fn) => (...args) => {
     const { room, player } = socket.data;
-    if (!room || !player || !room.players.includes(player)) return;
+    if (!room || !player || !(room.players.includes(player) || room.spectators.includes(player))) return;
     try { fn(room, player, ...args); } catch (e) { console.error('Xato:', e); }
   };
 
@@ -149,8 +174,9 @@ io.on('connection', (socket) => {
     if (!target || !target.socketId || !p.voice || !target.voice) return;
     io.to(target.socketId).emit('rtc', { from: p.id, data: msg.data });
   }));
+  socket.on('addBot', withPlayer((room, p) => room.addBot(p)));
   socket.on('leave', withPlayer((room, p) => {
-    room.removePlayer(p);
+    if (p.spectator) room.removeSpectator(p); else room.removePlayer(p);
     socket.data = {};
     scheduleCleanup(room);
   }));
@@ -161,8 +187,14 @@ io.on('connection', (socket) => {
     p.socketId = null;
     p.voice = false;
     p.voiceSession = null;
+    if (p.spectator) {
+      p.leaveTimer = setTimeout(() => { if (!p.connected) room.removeSpectator(p); }, 20000);
+      room.broadcast();
+      scheduleCleanup(room);
+      return;
+    }
     if (room.hostId === p.id) {
-      const next = room.players.find((q) => q.connected);
+      const next = room.players.find((q) => q.connected && !q.bot);
       if (next) room.hostId = next.id;
     }
     // Lobbida 20 soniya ichida qaytmasa — stoldan turadi

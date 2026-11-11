@@ -80,6 +80,19 @@ function cleanAvatar(a) {
 // Muhokama paytidagi reaksiyalar
 const REACTIONS = ['🤔', '😱', '👀', '🤥', '😂', '👍', '👎', '🙏'];
 
+// Bot o'yinchilar
+const BOT_NAMES = ['Anvar', 'Dilnoza', 'Jahongir', 'Malika', 'Bobur', 'Shahzoda', 'Rustam', 'Zarina',
+  'Otabek', 'Kamola', 'Sherzod', 'Nilufar', 'Feruza', 'Doston', 'Lola', 'Temur'];
+const BOT_LINES = {
+  day: ['Menimcha, {x} shubhali.', "Kecha nimadir g'alati bo'ldi...", 'Men tinch aholiman, ishoninglar!',
+    '{x}, nega jim turibsan?', "Mafiya oramizda, ehtiyot bo'linglar.", 'Hozircha hech kimni ayblamayman.',
+    "{x} kecha juda tez ovoz berdi, menga yoqmadi.", 'Dalil kerak, faqat taxmin bilan chiqarmaylik.'],
+  defense: ['Men begunohman! Meni chiqarmanglar!', 'Bu xato! Men tinch aholiman.', 'Ishoninglar, mafiya boshqa odam!',
+    "Meni chiqarsangiz, mafiya xursand bo'ladi."],
+  lastWord: ['Alvido, shahar...', 'Mafiyani toping, men begunoh edim!', 'Hammangizga omad!', '{x}ga qarab turinglar...'],
+};
+const pickOne = (arr) => arr[crypto.randomInt(arr.length)];
+
 const isMafia = (p) => !!p && !!ROLES[p.role] && ROLES[p.role].team === 'mafia';
 
 // ───────── ROLLAR TAQSIMOTI VA SOZLAMALAR ─────────
@@ -195,6 +208,7 @@ class Room {
     this.votes = {};
     this.ready = new Set();
     this.lastWordIds = new Set();
+    this.spectators = [];       // tomoshabinlar (o'yin paytida kelganlar)
     this.history = [];          // o'yin xulosasi uchun: har tun va kun nima bo'lgani
     this.password = '';         // stol paroli (bo'sh — parolsiz)
     this.kickedNames = new Set();
@@ -283,10 +297,150 @@ class Room {
       this.addLog(kicked ? `🚪 ${p.name} stoldan chiqarildi` : `${p.name} stoldan turdi`);
     }
     if (this.hostId === p.id) {
-      const next = this.players.find((q) => q.connected);
+      const next = this.players.find((q) => q.connected && !q.bot);
       this.hostId = next ? next.id : null;
     }
     this.broadcast();
+  }
+
+  // ───────── TOMOSHABINLAR ─────────
+  addSpectator(name, socketId, avatar) {
+    const s = {
+      id: crypto.randomUUID(), token: crypto.randomBytes(16).toString('hex'),
+      name, socketId, connected: true, avatar: cleanAvatar(avatar),
+      spectator: true, role: null, alive: false, known: {}, bullets: 0, voice: false, voiceSession: null,
+    };
+    this.spectators.push(s);
+    this.addLog(`👁️ ${name} tomosha qilmoqda`);
+    this.broadcast();
+    return s;
+  }
+
+  removeSpectator(s) {
+    clearTimeout(s.leaveTimer);
+    this.spectators = this.spectators.filter((q) => q !== s);
+    this.broadcast();
+  }
+
+  // ───────── BOTLAR ─────────
+  addBot(p) {
+    if (p.id !== this.hostId || this.phase !== 'lobby' || this.players.length >= MAX_PLAYERS) return;
+    const used = new Set([...this.players, ...this.spectators].map((q) => q.name.toLowerCase()));
+    const name = BOT_NAMES.find((n) => !used.has(n.toLowerCase())) || `Bot ${this.players.length + 1}`;
+    const b = this.addPlayer(name, null, { e: '🤖', c: crypto.randomInt(AVATAR_COLORS) });
+    b.bot = true;
+    b.connected = true;
+    this.broadcast();
+  }
+
+  botLine(b, kind) {
+    const others = this.alive().filter((q) => q !== b);
+    const x = others.length ? pickOne(others).name : 'kimdir';
+    return pickOne(BOT_LINES[kind]).replace('{x}', x);
+  }
+
+  /** Har bir yangi vaziyatda bot bir marta "o'ylab" (1–5 s) harakat qiladi */
+  runBots() {
+    if (!this.inGame()) return;
+    const key = `${this.phase}:${this.round}:${this.step ? this.step.key : ''}:${this.accusedId || ''}`;
+    for (const b of this.players) {
+      if (!b.bot || b.botKey === key) continue;
+      if (!b.alive && !(this.phase === 'lastWord' && this.lastWordIds.has(b.id))) continue;
+      b.botKey = key;
+      const delay = 1.2 + Math.random() * 3.8;
+      setTimeout(() => {
+        if (b.botKey !== key || !this.players.includes(b)) return;
+        try { this.botAct(b); } catch (e) { console.error(`[${this.code}] bot xatosi:`, e); }
+      }, ms(delay));
+    }
+  }
+
+  botVoteTarget(b, T) {
+    const alive = (id) => { const q = this.byId(id); return q && q.alive; };
+    // Komissar bot topgan mafiyaga ovoz beradi
+    const found = T.find((id) => b.known[id] === 'mafia' && alive(id));
+    if (found) return found;
+    let pool = T;
+    if (isMafia(b)) pool = T.filter((id) => !isMafia(this.byId(id))) ; // sheriklarga ovoz bermaydi
+    if (!pool.length) pool = T;
+    pool = pool.filter((id) => b.known[id] !== 'clean') .length ? pool.filter((id) => b.known[id] !== 'clean') : pool;
+    // ko'pchilikka ergashish: eng ko'p ovoz olganni tanlash ehtimoli
+    const tally = countOf(Object.values(this.votes));
+    const leader = Object.keys(tally).sort((a, c) => tally[c] - tally[a]).find((id) => pool.includes(id));
+    if (leader && Math.random() < 0.55) return leader;
+    return pickOne(pool);
+  }
+
+  botAct(b) {
+    switch (this.phase) {
+      case 'night': {
+        if (!this.canAct(b)) return;
+        const k = this.step.key;
+        const T = this.targetsFor(b);
+        if (!T.length) return;
+        let t = null;
+        if (k === 'sniper' || k === 'kamikadze') {
+          t = T.find((id) => b.known[id] === 'mafia') || null;
+          if (!t && Math.random() < 0.8) return this.skip(b); // ko'r-ko'rona otmaydi
+        }
+        if (!t && k === 'mafia') {
+          // Don Komissarni topgan bo'lsa — mafiya uni nishonga oladi
+          const com = this.players.filter(isMafia).flatMap((m) => Object.keys(m.known).filter((id) => m.known[id] === 'commissar'));
+          t = T.find((id) => com.includes(id)) || null;
+          const donVote = Object.entries(this.night.mafiaVotes).find(([id]) => this.byId(id).role === 'don');
+          if (!t && donVote && T.includes(donVote[1])) t = donVote[1]; // Don'ga ergashadi
+        }
+        if (!t && (k === 'commissar' || k === 'don')) {
+          const fresh = T.filter((id) => !b.known[id]);
+          t = fresh.length ? pickOne(fresh) : null;
+        }
+        if (!t && k === 'doctor' && T.includes(b.id) && Math.random() < 0.35) t = b.id;
+        this.act(b, t || pickOne(T));
+        return;
+      }
+      case 'day': {
+        // Komissar bot mafiyani topgan bo'lsa — ochiqchasiga aytadi
+        const exposed = Object.keys(b.known).find((id) => b.known[id] === 'mafia' && this.byId(id) && this.byId(id).alive);
+        if (b.role === 'commissar' && exposed && Math.random() < 0.6) {
+          this.sendChat(b, `Men Komissarman! ${this.byId(exposed).name} — MAFIA!`);
+        } else if (Math.random() < 0.6) {
+          this.sendChat(b, this.botLine(b, 'day'));
+        }
+        setTimeout(() => {
+          if (this.phase === 'day' && b.alive && !this.ready.has(b.id)) this.toggleReady(b);
+        }, ms(2 + Math.random() * 5));
+        return;
+      }
+      case 'vote': {
+        const T = this.targetsFor(b);
+        if (T.length) this.vote(b, this.botVoteTarget(b, T));
+        return;
+      }
+      case 'defense':
+        if (b.id === this.accusedId) {
+          this.sendChat(b, this.botLine(b, 'defense'));
+          setTimeout(() => this.endDefense(b), ms(3 + Math.random() * 3));
+        }
+        return;
+      case 'verdict': {
+        if (b.id === this.accusedId || !b.alive) return;
+        const acc = this.byId(this.accusedId);
+        if (!acc) return;
+        let yes = Math.random() < 0.6;
+        if (isMafia(b) && isMafia(acc)) yes = false;
+        if (b.known[acc.id] === 'mafia') yes = true;
+        if (b.known[acc.id] === 'clean') yes = false;
+        this.castVerdict(b, yes);
+        return;
+      }
+      case 'lastWord':
+        if (this.lastWordIds.has(b.id)) {
+          this.sendChat(b, this.botLine(b, 'lastWord'));
+          setTimeout(() => this.endLastWord(b), ms(2 + Math.random() * 2));
+        }
+        return;
+      default:
+    }
   }
 
   setAvatar(p, avatar) {
@@ -305,7 +459,7 @@ class Room {
   // ───────── XONA EGASI BOSHQARUVI ─────────
   transferHost(p, targetId) {
     const t = this.byId(targetId);
-    if (p.id !== this.hostId || !t || t === p || !t.connected) return;
+    if (p.id !== this.hostId || !t || t === p || !t.connected || t.bot) return;
     this.hostId = t.id;
     this.addLog(`👑 ${p.name} xona egaligini ${t.name}ga topshirdi`);
     this.broadcast();
@@ -796,7 +950,16 @@ class Room {
   backToLobby(p) {
     if (p.id !== this.hostId || this.phase !== 'gameover') return;
     this.players = this.players.filter((q) => q.connected);
-    for (const q of this.players) { q.role = null; q.alive = true; q.known = {}; q.bullets = 0; }
+    for (const q of this.players) { q.role = null; q.alive = true; q.known = {}; q.bullets = 0; q.botKey = null; }
+    // Tomoshabinlar bo'sh o'rinlarga o'tiradi
+    const waiting = this.spectators.filter((s) => s.connected);
+    this.spectators = [];
+    for (const s of waiting) {
+      if (this.players.length >= MAX_PLAYERS) { this.spectators.push(s); continue; }
+      s.spectator = false; s.alive = true; s.known = {}; s.role = null;
+      this.players.push(s);
+      this.addLog(`${s.name} stolga o'tirdi`);
+    }
     this.phase = 'lobby';
     this.winner = null;
     this.log = [];
@@ -852,7 +1015,7 @@ class Room {
     const now = Date.now();
     if (p.lastReact && now - p.lastReact < 1200) return; // tez-tez bosishdan himoya
     p.lastReact = now;
-    for (const q of this.players) {
+    for (const q of [...this.players, ...this.spectators]) {
       if (q.socketId) this.io.to(q.socketId).emit('reaction', { id: p.id, e: emoji });
     }
   }
@@ -874,7 +1037,7 @@ class Room {
     const msg = { from: p.name, fromId: p.id, text, channel, lastWord: this.phase === 'lastWord', defense: this.phase === 'defense', t: Date.now() };
     this.chat.push(msg);
     if (this.chat.length > 150) this.chat.shift();
-    for (const q of this.players) {
+    for (const q of [...this.players, ...this.spectators]) {
       if (q.socketId && this.canSeeChat(q, msg)) this.io.to(q.socketId).emit('chat', msg);
     }
   }
@@ -904,7 +1067,7 @@ class Room {
     const players = this.players.map((q, seat) => {
       const showRole = q.id === p.id || over || (!q.alive && reveal) || (meMafia && isMafia(q));
       const v = {
-        id: q.id, name: q.name, seat, alive: q.alive, connected: q.connected, avatar: q.avatar,
+        id: q.id, name: q.name, seat, alive: q.alive, connected: q.connected, avatar: q.avatar, bot: !!q.bot,
         role: showRole && q.role ? q.role : null,
         known: p.known[q.id] || null,
         votes: voteCounts[q.id] || 0,
@@ -949,6 +1112,7 @@ class Room {
         : this.phase === 'voteResult' ? this.lastVerdict : null,
       history: over ? this.history : null, // xulosa faqat o'yin tugagach ochiladi
       hasPassword: !!this.password,
+      spectatorCount: this.spectators.filter((s) => s.connected).length,
       password: p.id === this.hostId ? this.password : undefined,
       aliveCount: this.alive().length,
       players,
@@ -968,7 +1132,8 @@ class Room {
         canVerdict: this.phase === 'verdict' && p.alive && p.id !== this.accusedId,
         myVerdict: this.phase === 'verdict' && p.id in this.verdicts ? this.verdicts[p.id] : null,
         voice: this.voiceFor(p),
-        canReact: this.canReact(p),
+        canReact: this.canReact(p) && !p.spectator,
+        spectator: !!p.spectator,
       },
       reactions: REACTIONS,
       log: this.log.filter((l) => l.to === null || l.to === p.id).slice(-60),
@@ -982,9 +1147,10 @@ class Room {
     this.broadcastQueued = true;
     setImmediate(() => {
       this.broadcastQueued = false;
-      for (const p of this.players) {
+      for (const p of [...this.players, ...this.spectators]) {
         if (p.socketId) this.io.to(p.socketId).emit('state', this.viewFor(p));
       }
+      this.runBots();
     });
   }
 }

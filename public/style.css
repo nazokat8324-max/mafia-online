@@ -1221,3 +1221,23 @@ html[data-theme="noir"] .prefs-box summary { font-family: var(--display); color:
 @media (min-width: 901px) {
   .pane[data-pane="me"] { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════
+   TOMOSHABIN · BOTLAR · PWA
+   ═══════════════════════════════════════════════════════════ */
+.spec-banner {
+  text-align: center; padding: 7px 14px; font-size: 13.5px; font-weight: 600;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cyan) 22%, transparent), transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--cyan) 35%, transparent);
+}
+.spec-count { font-size: 12.5px; color: var(--muted); padding: 3px 8px; border: 1px solid var(--stroke); border-radius: 999px; white-space: nowrap; }
+#spectateBtn { margin-top: 10px; }
+.server-note { margin: 12px 0 0; font-size: 13px; color: var(--amber); }
+.install-btn { margin-top: 14px; border-color: var(--cyan); color: var(--cyan); }
+.ios-hint { margin: 12px auto 0; font-size: 12.5px; color: var(--muted); max-width: 320px; line-height: 1.45; }
+html[data-theme="noir"] .spec-banner { background: rgba(235, 228, 211, .06); font-family: var(--type); font-weight: 400; }
+html[data-theme="noir"] .install-btn { color: var(--paper); border-color: var(--paper); }
+html[data-theme="noir"] .server-note { font-family: var(--type); }
+
+@media (max-width: 900px) { .spec-count { display: none !important; } .spec-banner { font-size: 12px; padding: 5px 10px; } }
