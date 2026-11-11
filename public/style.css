@@ -726,3 +726,315 @@ ul { list-style: none; margin: 0; padding: 0; }
 }
 
 .seat .tag:empty { display: none; }
+
+/* ═══════════════════════════════════════════════════════════
+   USLUB ALMASHTIRGICH va umumiy qo'shimchalar
+   ═══════════════════════════════════════════════════════════ */
+.theme-switch {
+  display: inline-flex; gap: 3px; padding: 3px; margin-bottom: 18px;
+  border: 1px solid var(--stroke); border-radius: 999px; background: rgba(0, 0, 0, .3);
+}
+.theme-switch button {
+  border: 0; background: transparent; cursor: pointer; padding: 6px 14px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; color: var(--muted); transition: background .25s, color .25s;
+}
+.theme-switch button.on { background: linear-gradient(120deg, var(--accent), var(--accent2)); color: #fff; }
+
+/* faqat noir'da ko'rinadigan elementlar */
+.bg-noir, .grain, .stamp, .fx-mast, .fx-foot { display: none; }
+.fx-card { position: relative; }
+.avatar .av-face {
+  display: block; line-height: 1;
+  font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Inter', sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   NOIR — 1930-yillar: qora · qog'oz · qizil, Art Deco, eski gazeta
+   ═══════════════════════════════════════════════════════════ */
+html[data-theme="noir"] {
+  --bg0: #070707;
+  --bg1: #1a1918;
+  --paper: #ebe4d3;
+  --ink: #16130f;
+  --text: #ebe4d3;
+  --muted: #9a9284;
+  --stroke: rgba(235, 228, 211, .2);
+  --glass: rgba(235, 228, 211, .04);
+  --glass-2: rgba(235, 228, 211, .09);
+  --red: #c8102e;
+  --pink: #c8102e;
+  --cyan: #ebe4d3;
+  --green: #ebe4d3;
+  --violet: #8d877c;
+  --blue: #8d877c;
+  --amber: #d4af37;
+  --radius: 3px;
+  --display: 'Limelight', 'Playfair Display', Georgia, serif;
+  --font: 'Lora', Georgia, 'Times New Roman', serif;
+  --type: 'Special Elite', 'Courier New', monospace;
+  --head: 'Playfair Display', Georgia, serif;
+}
+html[data-theme="noir"] body {
+  --accent: var(--red);
+  --accent2: #7d0a1c;
+  background: radial-gradient(ellipse at 50% -10%, #222120 0%, #070707 62%) fixed;
+}
+html[data-theme="noir"] body.phase-night { --accent: #77716a; --accent2: #3b3936; }
+html[data-theme="noir"] body.phase-lastWord { --accent: var(--amber); --accent2: #6d5a1c; }
+html[data-theme="noir"] body.phase-morning,
+html[data-theme="noir"] body.phase-day,
+html[data-theme="noir"] body.phase-gameover { --accent: var(--paper); --accent2: var(--red); }
+html[data-theme="noir"] ::selection { background: var(--red); color: var(--paper); }
+
+/* ───────── fon: plyonka donadorligi, jalyuzi, yomg'ir ───────── */
+html[data-theme="noir"] .bg-glow,
+html[data-theme="noir"] .bg-grid { display: none; }
+html[data-theme="noir"] .bg-noir { display: block; position: fixed; inset: 0; z-index: -2; pointer-events: none; overflow: hidden; }
+html[data-theme="noir"] .bg-noir::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 220px 60px #000; }
+html[data-theme="noir"] .blinds {
+  position: absolute; inset: -20%;
+  background: repeating-linear-gradient(-24deg, rgba(255, 246, 222, .07) 0 34px, transparent 34px 78px);
+  mask-image: radial-gradient(ellipse at 22% 18%, #000 0%, transparent 60%);
+  -webkit-mask-image: radial-gradient(ellipse at 22% 18%, #000 0%, transparent 60%);
+  animation: blindsSway 18s ease-in-out infinite;
+}
+@keyframes blindsSway { 50% { transform: translateX(2%) skewX(-1deg); } }
+html[data-theme="noir"] .rain { display: none; }
+html[data-theme="noir"] body.phase-night .rain {
+  display: block; position: absolute; inset: -10%;
+  background: repeating-linear-gradient(104deg, rgba(220, 220, 220, .09) 0 1px, transparent 1px 11px);
+  animation: rain .45s linear infinite;
+}
+@keyframes rain { to { transform: translate(-22px, 90px); } }
+html[data-theme="noir"] .grain {
+  display: block; position: fixed; inset: -50%; z-index: 90; pointer-events: none; opacity: .09;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  animation: grain 1.2s steps(6) infinite;
+}
+@keyframes grain {
+  0% { transform: translate(0, 0); } 20% { transform: translate(-4%, 3%); } 40% { transform: translate(3%, -2%); }
+  60% { transform: translate(-2%, -4%); } 80% { transform: translate(4%, 2%); } 100% { transform: translate(0, 0); }
+}
+html[data-theme="noir"] .skyline { opacity: .55; filter: grayscale(.2); }
+html[data-theme="noir"] .skyline rect:not(.win) { fill: #0c0c0c; stroke: rgba(235, 228, 211, .22); }
+html[data-theme="noir"] .skyline .win { fill: #f1dca0; }
+
+/* ───────── panellar: qo'sh hoshiyali Art Deco ───────── */
+html[data-theme="noir"] .glass {
+  background: linear-gradient(180deg, #191817, #0e0d0c);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border: 1px solid rgba(235, 228, 211, .32);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .7), inset 0 0 0 4px #0e0d0c, inset 0 0 0 5px rgba(235, 228, 211, .12);
+}
+html[data-theme="noir"] .topbar { border-width: 0 0 1px; box-shadow: 0 6px 20px #000; }
+html[data-theme="noir"] .box h3 {
+  font-family: var(--display); font-weight: 400; font-size: 13px; letter-spacing: 3px; color: var(--paper);
+  border-bottom: 1px solid var(--stroke); padding-bottom: 8px;
+}
+
+/* ───────── tugmalar ───────── */
+html[data-theme="noir"] .btn {
+  border-radius: 2px; text-transform: uppercase; letter-spacing: 1.8px; font-size: 12.5px; font-weight: 700;
+  border-color: rgba(235, 228, 211, .4); background: rgba(235, 228, 211, .03);
+}
+html[data-theme="noir"] .btn:hover { box-shadow: none; background: rgba(235, 228, 211, .1); border-color: var(--paper); }
+html[data-theme="noir"] .btn.primary {
+  background: var(--red); color: var(--paper); border: 1px solid #e23a52;
+  box-shadow: 3px 3px 0 #000; text-shadow: none;
+}
+html[data-theme="noir"] .btn.primary:hover { box-shadow: 5px 5px 0 #000; filter: brightness(1.12); transform: translate(-1px, -1px); }
+html[data-theme="noir"] .btn.neon { color: var(--paper); border-color: var(--paper); box-shadow: none; }
+html[data-theme="noir"] .btn.danger { background: #5c0715; box-shadow: 3px 3px 0 #000; }
+html[data-theme="noir"] .icon-btn { letter-spacing: 0; }
+html[data-theme="noir"] input, html[data-theme="noir"] select { border-radius: 2px; background: #0b0a09; font-family: var(--type); }
+html[data-theme="noir"] input:focus, html[data-theme="noir"] select:focus { border-color: var(--red); box-shadow: none; }
+html[data-theme="noir"] .theme-switch { border-radius: 2px; }
+html[data-theme="noir"] .theme-switch button { border-radius: 2px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px; }
+html[data-theme="noir"] .theme-switch button.on { background: var(--red); color: var(--paper); }
+
+/* ───────── bosh sahifa ───────── */
+html[data-theme="noir"] .logo {
+  font-family: var(--display); font-weight: 400; color: var(--paper); letter-spacing: .1em; padding-left: .1em;
+  text-shadow: 4px 4px 0 var(--red), 0 0 40px rgba(0, 0, 0, .9);
+}
+html[data-theme="noir"] .logo .flicker { animation: none; }
+html[data-theme="noir"] .logo::before, html[data-theme="noir"] .logo::after {
+  content: ""; display: block; height: 0; margin: 0 auto; width: 70%;
+  border-top: 3px double rgba(235, 228, 211, .6);
+}
+html[data-theme="noir"] .logo::before { margin-bottom: 10px; }
+html[data-theme="noir"] .logo::after { margin-top: 6px; }
+html[data-theme="noir"] .tagline { font-family: var(--type); color: var(--muted); }
+html[data-theme="noir"] .home-card { border-radius: 3px; }
+html[data-theme="noir"] .emoji-grid button { border-radius: 2px; filter: grayscale(1) contrast(1.15); }
+html[data-theme="noir"] .emoji-grid button.on { border-color: var(--red); background: rgba(200, 16, 46, .15); box-shadow: none; filter: none; }
+html[data-theme="noir"] .color-row { display: none; }
+html[data-theme="noir"] .avatar-xl {
+  border-color: var(--paper); background: radial-gradient(circle at 40% 30%, #3b3833, #0b0a09 75%);
+  box-shadow: 0 0 0 4px #0b0a09, 0 0 0 5px rgba(235, 228, 211, .4), 0 10px 30px #000;
+  filter: grayscale(1) contrast(1.15);
+}
+html[data-theme="noir"] .divider span { background: #131211; font-family: var(--type); }
+html[data-theme="noir"] .row input { font-family: var(--display); font-weight: 400; }
+
+/* ───────── yuqori panel ───────── */
+html[data-theme="noir"] .room b { font-family: var(--display); font-weight: 400; color: var(--paper); text-shadow: 2px 2px 0 var(--red); }
+html[data-theme="noir"] .phase-label { font-family: var(--display); font-weight: 400; letter-spacing: 3px; text-shadow: none; color: var(--paper); }
+html[data-theme="noir"] .timer-ring { box-shadow: none; background: conic-gradient(var(--paper) calc(var(--p) * 360deg), rgba(235, 228, 211, .1) 0); }
+html[data-theme="noir"] .timer-ring.low { background: conic-gradient(var(--red) calc(var(--p) * 360deg), rgba(235, 228, 211, .1) 0); }
+html[data-theme="noir"] .timer { background: #0b0a09; font-family: var(--type); font-weight: 400; }
+html[data-theme="noir"] .awake-banner { text-shadow: none; font-family: var(--type); font-weight: 400; letter-spacing: 1px; }
+
+/* ───────── stol: osilgan chiroq, Art Deco quyosh nurlari ───────── */
+html[data-theme="noir"] .table-wrap::before {
+  content: ""; position: absolute; left: 50%; top: -12%; width: 64%; height: 85%; transform: translateX(-50%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 240, 200, .14), rgba(255, 240, 200, .04) 45%, transparent 70%);
+  clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
+  pointer-events: none;
+}
+html[data-theme="noir"] .table {
+  background:
+    radial-gradient(ellipse at 50% 32%, rgba(255, 244, 214, .17), transparent 55%),
+    radial-gradient(ellipse at 50% 50%, #1d1b19 0%, #060606 82%);
+  box-shadow: 0 34px 80px #000, inset 0 0 90px #000;
+}
+html[data-theme="noir"] .table::before {
+  background: none; padding: 0; -webkit-mask: none; mask: none; animation: none; filter: none;
+  inset: -7px; border: 2px solid var(--paper);
+  box-shadow: 0 0 0 5px #0b0a09, 0 0 0 6px rgba(235, 228, 211, .5), 0 0 0 12px #0b0a09, 0 0 0 13px rgba(200, 16, 46, .55);
+}
+html[data-theme="noir"] .table::after {
+  border: 1px solid rgba(235, 228, 211, .14);
+  background-image: repeating-conic-gradient(from 0deg at 50% 50%, rgba(235, 228, 211, .055) 0deg 4deg, transparent 4deg 15deg);
+  background-size: auto;
+}
+html[data-theme="noir"] .table-center h2 { font-family: var(--display); font-weight: 400; letter-spacing: 2px; text-shadow: 2px 2px 0 #000; }
+html[data-theme="noir"] .table-center p { color: #cfc7b6; font-family: var(--font); }
+html[data-theme="noir"] .chip { border-radius: 2px; font-family: var(--type); background: rgba(235, 228, 211, .05); }
+
+/* ───────── o'rinlar: oq-qora portretlar ───────── */
+html[data-theme="noir"] .avatar {
+  border: 2px solid var(--paper);
+  background: radial-gradient(circle at 40% 30%, #3b3833, #0b0a09 75%);
+  box-shadow: 0 0 0 3px #0b0a09, 0 0 0 4px rgba(235, 228, 211, .3), 0 8px 18px #000;
+  font-family: var(--display); font-weight: 400;
+}
+html[data-theme="noir"] .avatar .av-face { filter: grayscale(1) contrast(1.2); }
+html[data-theme="noir"] input::placeholder { color: rgba(154, 146, 132, .7); }
+html[data-theme="noir"] .seat .name { border-radius: 2px; background: #0b0a09; font-family: var(--font); letter-spacing: .5px; backdrop-filter: none; }
+html[data-theme="noir"] .seat .tag { font-family: var(--type); }
+html[data-theme="noir"] .seat.me .name { border-color: var(--red); box-shadow: 2px 2px 0 var(--red); }
+html[data-theme="noir"] .seat.teammate .avatar { box-shadow: 0 0 0 3px #0b0a09, 0 0 0 5px var(--red), 0 8px 18px #000; }
+html[data-theme="noir"] .seat.selected .avatar { border-color: var(--red); box-shadow: 0 0 0 4px #0b0a09, 0 0 0 7px var(--red), 0 0 30px rgba(200, 16, 46, .6); }
+html[data-theme="noir"] .seat.talking .avatar { border-color: var(--amber); box-shadow: 0 0 0 4px #0b0a09, 0 0 0 6px var(--amber); }
+html[data-theme="noir"] .badge.ok { color: var(--ink); box-shadow: none; }
+html[data-theme="noir"] .badge.left, html[data-theme="noir"] .badge.role { background: #0b0a09; border: 1px solid var(--stroke); box-shadow: none; }
+html[data-theme="noir"] .badge { box-shadow: 2px 2px 0 #000; font-family: var(--type); font-weight: 400; }
+html[data-theme="noir"] .picks { text-shadow: none; font-family: var(--type); color: #e25a6c; }
+
+/* ───────── panel ichi: yozuv mashinkasi ───────── */
+html[data-theme="noir"] .role-card .icon { border-radius: 2px; box-shadow: none; filter: grayscale(.3); }
+html[data-theme="noir"] .role-card b { font-family: var(--display); font-weight: 400; letter-spacing: 1.5px; }
+html[data-theme="noir"] #log li { font-family: var(--type); font-size: 13px; border-radius: 0; border-left-width: 3px; border-left-color: rgba(235, 228, 211, .25); }
+html[data-theme="noir"] #log li.death { background: rgba(200, 16, 46, .13); border-left-color: var(--red); }
+html[data-theme="noir"] #log li.night { background: rgba(235, 228, 211, .03); border-left-color: #6b665e; }
+html[data-theme="noir"] #log li.private { background: rgba(212, 175, 55, .1); border-left-color: var(--amber); }
+html[data-theme="noir"] #log li.win { background: rgba(235, 228, 211, .12); border-left-color: var(--paper); }
+html[data-theme="noir"] #chatList li { border-radius: 2px; }
+html[data-theme="noir"] #chatList li b { color: var(--paper); font-family: var(--display); font-weight: 400; letter-spacing: .5px; }
+html[data-theme="noir"] #chatList li.mine { background: rgba(200, 16, 46, .2); }
+html[data-theme="noir"] #chatList li.mafia b { color: #ff5c73; }
+html[data-theme="noir"] .tabs { border-radius: 0; }
+html[data-theme="noir"] .tabs button.active { text-shadow: none; color: var(--paper); }
+html[data-theme="noir"] .tabs button.active::before { border-radius: 0; box-shadow: none; }
+
+/* ───────── tun ───────── */
+html[data-theme="noir"] .night-overlay { background: radial-gradient(ellipse at 50% 30%, rgba(26, 25, 24, .97), rgba(0, 0, 0, .995) 70%); }
+html[data-theme="noir"] .night-overlay::before {
+  content: ""; position: absolute; inset: -10%; pointer-events: none;
+  background: repeating-linear-gradient(104deg, rgba(220, 220, 220, .08) 0 1px, transparent 1px 11px);
+  animation: rain .45s linear infinite;
+}
+html[data-theme="noir"] .stars { display: none; }
+html[data-theme="noir"] .moon-glow { background: radial-gradient(circle at 35% 35%, #fff, #d9d4c8 50%, #8a857b 80%); box-shadow: 0 0 50px rgba(255, 255, 255, .25); filter: grayscale(1); }
+html[data-theme="noir"] .eyes { filter: grayscale(1); }
+html[data-theme="noir"] .sleep h2 { font-family: var(--display); font-weight: 400; color: var(--paper); text-shadow: none; letter-spacing: 2px; }
+html[data-theme="noir"] .sleep-sub, html[data-theme="noir"] .night-timer { font-family: var(--type); color: #7d776d; }
+html[data-theme="noir"] .night-step { font-family: var(--type); text-shadow: none; color: #e25a6c; letter-spacing: 2px; }
+
+/* ───────── modal oynalar ───────── */
+html[data-theme="noir"] .modal-card { border-radius: 3px; }
+html[data-theme="noir"] .modal-card h2 { font-family: var(--display); font-weight: 400; letter-spacing: 2px; text-shadow: 2px 2px 0 var(--red); }
+html[data-theme="noir"] .settings-card h3 { font-family: var(--display); font-weight: 400; color: var(--paper); }
+html[data-theme="noir"] .seg { border-radius: 2px; }
+html[data-theme="noir"] .seg button { border-radius: 1px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; }
+html[data-theme="noir"] .seg button.on { background: var(--red); box-shadow: none; }
+html[data-theme="noir"] .role-opt, html[data-theme="noir"] .set-row { border-radius: 2px; }
+html[data-theme="noir"] .stepper button { border-radius: 2px; }
+
+/* ───────── rol kartasi: maxfiy hujjat ───────── */
+html[data-theme="noir"] .face { border-radius: 4px; }
+html[data-theme="noir"] .face.back {
+  background:
+    repeating-linear-gradient(45deg, rgba(235, 228, 211, .06) 0 2px, transparent 2px 14px),
+    repeating-linear-gradient(-45deg, rgba(235, 228, 211, .06) 0 2px, transparent 2px 14px),
+    #0e0d0c;
+  border: 2px solid var(--paper);
+  box-shadow: inset 0 0 0 8px #0e0d0c, inset 0 0 0 9px rgba(235, 228, 211, .5), 0 20px 50px #000;
+}
+html[data-theme="noir"] .back-logo { font-family: var(--display); font-weight: 400; color: var(--paper); text-shadow: 5px 5px 0 var(--red); }
+html[data-theme="noir"] .back-hint { font-family: var(--type); color: #a39b8c; }
+html[data-theme="noir"] .face.front {
+  background:
+    repeating-linear-gradient(180deg, transparent 0 27px, rgba(22, 19, 15, .08) 27px 28px),
+    radial-gradient(ellipse at 30% 20%, #f3ecdb, #ddd3bc 80%);
+  color: var(--ink);
+  border: 1px solid #b9ad92;
+  box-shadow: 0 25px 60px #000, inset 0 0 40px rgba(120, 90, 40, .25);
+}
+html[data-theme="noir"] .face.front .modal-top { color: #5c5345; font-family: var(--type); letter-spacing: 2px; border-bottom: 1px solid rgba(22, 19, 15, .3); padding-bottom: 6px; }
+html[data-theme="noir"] .big-icon { filter: grayscale(1) contrast(1.3) drop-shadow(2px 2px 0 rgba(0, 0, 0, .25)); }
+html[data-theme="noir"] .face.front h2 { font-family: var(--head); font-weight: 900; color: var(--ink); text-shadow: none; text-transform: uppercase; letter-spacing: 3px; }
+html[data-theme="noir"] .face.front p { color: #2c261e; font-family: var(--type); font-size: 13.5px; }
+html[data-theme="noir"] .team-line { color: var(--red) !important; font-family: var(--type) !important; }
+html[data-theme="noir"] .stamp {
+  display: block; position: absolute; top: 16%; right: 8%;
+  transform: rotate(14deg);
+  font-family: var(--display); font-size: 22px; letter-spacing: 3px; color: var(--red);
+  border: 3px double var(--red); padding: 2px 10px; opacity: .8;
+  mix-blend-mode: multiply;
+}
+html[data-theme="noir"] .flip-card.flipped .stamp { animation: stamp .5s .7s cubic-bezier(.3, 1.8, .5, 1) backwards; }
+@keyframes stamp { from { transform: rotate(14deg) scale(3); opacity: 0; } }
+
+/* ───────── faza sahnasi: aylanib kelayotgan gazeta ───────── */
+html[data-theme="noir"] .phase-fx::before { background: rgba(0, 0, 0, .78); backdrop-filter: grayscale(1) blur(3px); -webkit-backdrop-filter: grayscale(1) blur(3px); }
+html[data-theme="noir"] .phase-fx .fx-bg { background: radial-gradient(circle, rgba(255, 244, 214, .12), transparent 60%); }
+html[data-theme="noir"] .phase-fx .fx-card {
+  width: min(560px, 88vw); padding: 18px 22px 14px; color: var(--ink);
+  background: radial-gradient(ellipse at 30% 20%, #f2ead7, #d8cdb3 85%);
+  box-shadow: 0 30px 70px #000, inset 0 0 50px rgba(120, 90, 40, .3);
+  transform: rotate(-3deg);
+}
+html[data-theme="noir"] .phase-fx.play .fx-card { animation: paperSpin 1s cubic-bezier(.2, .9, .3, 1); }
+@keyframes paperSpin { from { transform: rotate(-1080deg) scale(.05); } }
+html[data-theme="noir"] .fx-mast {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  border-top: 3px double var(--ink); border-bottom: 3px double var(--ink); padding: 4px 0; margin-bottom: 10px;
+  font-family: var(--type); font-size: 11px; text-transform: uppercase;
+}
+html[data-theme="noir"] .fx-mast b { font-family: var(--head); font-weight: 900; font-size: clamp(16px, 4vw, 24px); letter-spacing: 2px; }
+html[data-theme="noir"] .phase-fx .fx-icon { font-size: clamp(50px, 12vw, 80px); filter: grayscale(1) contrast(1.3); animation: none !important; }
+html[data-theme="noir"] .phase-fx .fx-title {
+  font-family: var(--head); font-weight: 900; color: var(--ink); text-shadow: none;
+  font-size: clamp(30px, 8vw, 58px); letter-spacing: .04em; padding: 0; margin: 4px 0 0; line-height: 1.05;
+  animation: none !important;
+}
+html[data-theme="noir"] .phase-fx .fx-sub { color: #3a3329; font-family: var(--type); font-size: 14px; }
+html[data-theme="noir"] .fx-foot {
+  display: block; margin-top: 10px; padding-top: 5px; border-top: 1px solid rgba(22, 19, 15, .4);
+  font-family: var(--type); font-size: 10.5px; color: #5c5345;
+}
+html[data-theme="noir"] .fx-vote .fx-title, html[data-theme="noir"] .fx-lose .fx-title { color: var(--red); }
+
+html[data-theme="noir"] .toast { border-radius: 2px; background: #0e0d0c; border-color: var(--paper); box-shadow: 4px 4px 0 #000; font-family: var(--type); font-weight: 400; }

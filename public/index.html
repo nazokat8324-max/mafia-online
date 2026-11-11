@@ -8,7 +8,12 @@
   <title>Mafia — Tungi shahar</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;800;900&family=Limelight&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Playfair+Display:wght@700;900&family=Special+Elite&display=swap" rel="stylesheet">
+  <script>
+    // Uslubni sahifa chizilishidan oldin qo'yamiz — "miltillash" bo'lmasligi uchun
+    try { document.documentElement.dataset.theme = localStorage.getItem('mafia-theme') || 'neon'; }
+    catch (e) { document.documentElement.dataset.theme = 'neon'; }
+  </script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="phase-home">
@@ -17,10 +22,16 @@
   <div class="bg-glow" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="bg-grid" aria-hidden="true"></div>
   <div id="skyline" class="skyline" aria-hidden="true"></div>
+  <div class="bg-noir" aria-hidden="true"><i class="blinds"></i><i class="rain"></i></div>
+  <div class="grain" aria-hidden="true"></div>
 
   <!-- ───────── BOSH SAHIFA ───────── -->
   <section id="home" class="screen">
     <div class="home-wrap">
+      <div class="theme-switch" role="group" aria-label="Uslub">
+        <button type="button" data-theme-pick="neon">✦ Neon</button>
+        <button type="button" data-theme-pick="noir">🎩 Noir</button>
+      </div>
       <h1 class="logo" aria-label="Mafia">
         <span>M</span><span>A</span><span class="flicker">F</span><span>I</span><span>A</span>
       </h1>
@@ -64,6 +75,7 @@
       <div id="phaseLabel" class="phase-label"></div>
       <div class="top-right">
         <div id="timerRing" class="timer-ring"><span id="timer" class="timer"></span></div>
+        <button id="themeBtn" class="btn tiny ghost icon-btn" title="Uslubni almashtirish: Neon / Noir">🎨</button>
         <button id="soundBtn" class="btn tiny ghost icon-btn" title="Ovoz: hammasi / faqat effektlar / o'chiq">🔊</button>
         <button id="leaveBtn" class="btn tiny ghost icon-btn" title="Chiqish">✕</button>
       </div>
@@ -130,6 +142,7 @@
             <p class="back-hint">Kartangizni ochish uchun bosing</p>
           </div>
           <div class="face front" id="roleFront">
+            <div class="stamp">MAXFIY</div>
             <p class="modal-top">Sizning rolingiz</p>
             <div id="roleModalIcon" class="big-icon"></div>
             <h2 id="roleModalName"></h2>

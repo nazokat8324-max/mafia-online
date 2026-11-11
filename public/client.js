@@ -89,6 +89,27 @@ function setPhaseClass(phase) {
   if (phase === 'night') document.body.classList.add('night');
 }
 
+// ───────── USLUB: Neon / Noir ─────────
+const THEMES = ['neon', 'noir'];
+function currentTheme() { return document.documentElement.dataset.theme === 'noir' ? 'noir' : 'neon'; }
+function setTheme(t) {
+  if (!THEMES.includes(t)) t = 'neon';
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem('mafia-theme', t); } catch {}
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = t === 'noir' ? '#0b0b0b' : '#07060f';
+  document.querySelectorAll('[data-theme-pick]').forEach((b) => b.classList.toggle('on', b.dataset.themePick === t));
+}
+document.querySelectorAll('[data-theme-pick]').forEach((b) => {
+  b.onclick = () => { setTheme(b.dataset.themePick); Sound.play('select'); };
+});
+$('themeBtn').onclick = () => {
+  setTheme(currentTheme() === 'neon' ? 'noir' : 'neon');
+  toast(currentTheme() === 'noir' ? '🎩 Noir uslubi — 1930-yillar' : '✦ Neon uslubi');
+  if (state) renderSeats();
+};
+setTheme(currentTheme());
+
 // ───────── fon: neon shahar silueti ─────────
 (function drawSkyline() {
   const W = 1600, H = 220;
@@ -352,8 +373,12 @@ function playFx(kind, data) {
   const el = $('phaseFx');
   el.className = 'phase-fx';
   void el.offsetWidth; // animatsiyani qayta boshlash
-  el.innerHTML = `<div class="fx-bg"></div><div><div class="fx-icon">${data.icon}</div>
-    <p class="fx-title">${esc(data.title)}</p>${data.sub ? `<p class="fx-sub">${esc(data.sub)}</p>` : ''}</div>`;
+  const round = state && state.round ? state.round : 1;
+  el.innerHTML = `<div class="fx-bg"></div><div class="fx-card">
+    <div class="fx-mast"><span>№ ${round}</span><b>SHAHAR XABARLARI</b><span>Tungi nashr</span></div>
+    <div class="fx-icon">${data.icon}</div>
+    <p class="fx-title">${esc(data.title)}</p>${data.sub ? `<p class="fx-sub">${esc(data.sub)}</p>` : ''}
+    <div class="fx-foot">Mahalliy muxbirimiz xabar qiladi · Narxi 5 tiyin</div></div>`;
   el.classList.add('fx-' + kind, 'play');
   clearTimeout(fxTimer);
   fxTimer = setTimeout(() => { el.className = 'phase-fx'; }, 3500);
@@ -545,7 +570,7 @@ function renderSeats() {
     }
 
     return `<div class="${cls.join(' ')}" data-id="${p.id}" style="left:${pos[i].x}%;top:${pos[i].y}%;--c:${color}">
-      <div class="avatar">${face}${badges}</div>
+      <div class="avatar"><span class="av-face">${face}</span>${badges}</div>
       <div class="name">${esc(p.name)}${p.id === me.id && !isMobile() ? ' (siz)' : ''}</div>
       <div class="tag">${esc(tag)}</div>${picks}${voted}
     </div>`;
