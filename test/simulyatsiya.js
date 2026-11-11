@@ -31,7 +31,7 @@ const fail = (msg) => { console.error('❌', msg); server.kill(); process.exit(1
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const team = (r) => r && ROLES[r].team;
 
-const seen = { reactions: 0, roles: new Set(), skip: 0, lastWord: 0, bumNote: 0, jesterWin: 0, defense: 0, verdict: 0, acquitted: 0, history: 0 };
+const seen = { skipWin: 0, reactions: 0, roles: new Set(), skip: 0, lastWord: 0, bumNote: 0, jesterWin: 0, defense: 0, verdict: 0, acquitted: 0, history: 0 };
 
 function bot(name, ctx) {
   const s = io(URL, { forceNew: true, transports: ['websocket'] });
@@ -62,11 +62,15 @@ function bot(name, ctx) {
     if (st.phase === 'defense' && !st.settings.defense) fail("O'zini oqlash o'chiq, lekin faza boshlandi");
     if (st.phase === 'defense' && st.me.chat && !st.me.defense) fail(`${name} birovning himoyasi paytida gapira oladi`);
     if (st.log.some((l) => l.text.startsWith('🕊️'))) seen.acquitted = Math.max(seen.acquitted, 1);
+    if (st.log.some((l) => l.key === 'log.skipped')) seen.skipWin = 1;
+    if (st.phase === 'vote' && st.skipVoters.some((id) => !st.players.find((q) => q.id === id && q.alive))) fail("O'lik o'yinchi «hech kimni chiqarmaylik»ga ovoz berdi");
 
     // Tasodifiy harakat
     if (me.canSkip && Math.random() < 0.5) { seen.skip++; s.emit('skip'); return; }
     if (me.targets.length && !me.myTarget && Math.random() < 0.9) {
-      setTimeout(() => s.emit(st.phase === 'vote' ? 'vote' : 'act', pick(me.targets)), 5);
+      // ovoz berishda ba'zan "hech kimni chiqarmaylik"
+      const target = st.phase === 'vote' && Math.random() < 0.15 ? '__skip__' : pick(me.targets);
+      setTimeout(() => s.emit(st.phase === 'vote' ? 'vote' : 'act', target), 5);
     }
     if (me.defense) {
       seen.defense++;
@@ -261,6 +265,7 @@ server.stdout.once('data', async () => {
     if (!seen.lastWord) fail("Oxirgi so'z hech qachon ishlamadi");
     if (!seen.defense || !seen.verdict) fail("O'zini oqlash / yakuniy ovoz hech qachon ishlamadi");
     if (!seen.reactions) fail('Reaksiyalar hech qachon yetib bormadi');
+    console.log(`«Hech kimni chiqarmaylik» g'alaba qozongan kunlar: ${seen.skipWin ? 'bor' : "yo'q"}`);
     console.log(`Reaksiyalar: ${seen.reactions} ta yetkazildi (tunda — 0)`);
     console.log(`O'zini oqlash: ${seen.defense} marta · yakuniy ovozlar: ${seen.verdict} · oqlanganlar bor: ${seen.acquitted ? 'ha' : "yo'q"} · xulosalar: ${seen.history}`);
     console.log(`\nBarcha ${seen.roles.size} rol o'ynaldi · oxirgi so'z: ${seen.lastWord} marta · Snayper o'q uzmadi: ${seen.skip} marta · Daydi xabarlari: ${seen.bumNote > 0 ? 'bor' : "yo'q"} · Suid g'alabasi: ${seen.jesterWin}`);

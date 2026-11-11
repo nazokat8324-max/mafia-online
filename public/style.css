@@ -1280,3 +1280,11 @@ html[data-theme="noir"] .public-box h3 { font-family: var(--display); color: var
 html[data-theme="noir"] .pub-row { border-radius: 2px; }
 html[data-theme="noir"] .pub-av { filter: grayscale(1); border-radius: 2px; }
 html[data-theme="noir"] .pub-count { font-family: var(--type); color: var(--paper); font-weight: 400; }
+
+
+/* "Hech kimni chiqarmaylik" */
+.skip-vote { border-style: dashed; }
+.skip-vote.on { border-style: solid; border-color: var(--green); background: rgba(57, 255, 159, .14); box-shadow: 0 0 18px rgba(57, 255, 159, .35); }
+.skip-count { display: inline-block; min-width: 20px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--green); color: #052; font-weight: 800; font-size: 12px; }
+html[data-theme="noir"] .skip-vote.on { border-color: var(--paper); background: rgba(235, 228, 211, .12); box-shadow: 3px 3px 0 #000; }
+html[data-theme="noir"] .skip-count { background: var(--paper); color: var(--ink); }

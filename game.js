@@ -69,6 +69,9 @@ function cleanAvatar(a) {
   };
 }
 
+// Ovoz berishda "hech kimni chiqarmaylik" tanlovi
+const SKIP = '__skip__';
+
 // Muhokama paytidagi reaksiyalar
 const REACTIONS = ['🤔', '😱', '👀', '🤥', '😂', '👍', '👎', '🙏'];
 
@@ -387,6 +390,7 @@ class Room {
     // Komissar bot topgan mafiyaga ovoz beradi
     const found = T.find((id) => b.known[id] === 'mafia' && alive(id));
     if (found) return found;
+    if (Math.random() < 0.1) return SKIP; // ba'zan "hech kimni chiqarmaylik"
     let pool = T;
     if (isMafia(b)) pool = T.filter((id) => !isMafia(this.byId(id))) ; // sheriklarga ovoz bermaydi
     if (!pool.length) pool = T;
@@ -858,7 +862,9 @@ class Room {
   }
 
   vote(p, targetId) {
-    if (this.phase !== 'vote' || !this.targetsFor(p).includes(targetId)) return;
+    if (this.phase !== 'vote') return;
+    const ok = targetId === SKIP ? p.alive : this.targetsFor(p).includes(targetId);
+    if (!ok) return;
     this.votes[p.id] = targetId;
     const voters = this.alive().filter((q) => q.connected);
     if (voters.every((q) => this.votes[q.id])) this.setTimer(2, () => this.resolveVote());
@@ -870,6 +876,15 @@ class Room {
     const max = Math.max(0, ...Object.values(tally));
     const top = Object.keys(tally).filter((id) => tally[id] === max);
     this.dayRecord = { type: 'day', round: this.round, votes: { ...this.votes }, accused: null, out: null };
+    // Ko'pchilik "hech kimni chiqarmaylik" desa — bugun hech kim chiqarilmaydi
+    if (max > 0 && top.length === 1 && top[0] === SKIP) {
+      this.dayRecord.skipped = true;
+      this.history.push(this.dayRecord);
+      this.phase = 'voteResult';
+      this.addLog('log.skipped', { n: max }, 'day');
+      this.setTimer(TIME.voteResult, () => this.startNight());
+      return this.broadcast();
+    }
     if (max > 0 && top.length === 1) {
       const acc = this.byId(top[0]);
       this.dayRecord.accused = acc.id;
@@ -1135,6 +1150,8 @@ class Room {
       step: this.phase === 'night' && this.step ? { key: this.step.key, title: this.step.title } : null,
       winner: this.winner,
       readyCount: this.phase === 'day' ? this.ready.size : 0,
+      skipVotes: voteCounts[SKIP] || 0,
+      skipVoters: showVotes ? Object.keys(this.votes).filter((id) => this.votes[id] === SKIP) : [],
       verdict: this.phase === 'verdict'
         ? { voted: Object.keys(this.verdicts).length, total: this.verdictVoters().length }
         : this.phase === 'voteResult' ? this.lastVerdict : null,

@@ -32,6 +32,7 @@ const stepTitle = (s) => t(`step.${s.key}.title`);
 const PHASE = (ph) => t(`phase.${ph}`);
 const TEAM = (team) => t(`team.${team}`);
 const TEAM_COLOR = { town: 'var(--cyan)', mafia: 'var(--red)', maniac: 'var(--violet)', jester: 'var(--amber)' };
+const SKIP = '__skip__'; // "hech kimni chiqarmaylik"
 const TIME_LABEL = (s) => (s ? t('time.sec', { s }) : t('time.auto'));
 
 /** Sahifadagi o'zgarmas matnlarni tanlangan tilga o'tkazish */
@@ -738,7 +739,8 @@ function renderSeats() {
     if (p.mafiaPicks && p.mafiaPicks.length) picks = `<div class="picks">🎯 ${p.mafiaPicks.map(esc).join(', ')}</div>`;
 
     let voted = '';
-    if (p.votedFor) {
+    if (p.votedFor === SKIP) voted = '<div class="picks">→ 🤝</div>';
+    else if (p.votedFor) {
       const t = players.find((q) => q.id === p.votedFor);
       if (t) voted = `<div class="picks">→ ${esc(t.name)}</div>`;
     }
@@ -837,8 +839,12 @@ function renderCenter() {
         <p class="verdict-count">${t('ver.count', { v: v.voted, total: v.total })}</p>`;
     }
   } else if (phase === 'vote') {
+    const skipOn = me.myTarget === SKIP;
     html = `<h2>${t('vote.title')}</h2>
-      <p>${t(me.alive ? 'vote.pick' : 'vote.waiting')}</p>`;
+      <p>${t(me.alive ? 'vote.pick' : 'vote.waiting')}</p>
+      ${me.alive
+        ? `<button class="btn skip-vote ${skipOn ? 'on' : ''}" id="skipVoteBtn" title="${esc(t('vote.skipHint'))}">${t('vote.skip')}${state.skipVotes ? ` <span class="skip-count">${state.skipVotes}</span>` : ''}</button>`
+        : (state.skipVotes ? `<p>${t('vote.skip')}: ${state.skipVotes}</p>` : '')}`;
   } else if (phase === 'morning' || phase === 'voteResult') {
     const v = phase === 'voteResult' && state.verdict;
     html = `<h2>${PHASE(phase)}</h2>${v ? `<div class="verdict-result"><span class="vy">👎 ${v.yes}</span><span class="vn">👍 ${v.no}</span></div>` : ''}${lastLog}`;
@@ -851,30 +857,43 @@ function renderCenter() {
   }
 
   // Bir xil matnni qayta chizmaymiz — aks holda animatsiya har safar qaytadan boshlanadi
-  setHTML($('center'), html);
-  const startBtn = $('startBtn');
-  if (startBtn) startBtn.onclick = () => socket.emit('start', (r) => r && r.error && toast(errText(r)));
-  const readyBtn = $('readyBtn');
-  if (readyBtn) readyBtn.onclick = () => socket.emit('ready');
-  const againBtn = $('againBtn');
-  if (againBtn) againBtn.onclick = () => socket.emit('lobby');
-  const skipBtn = $('skipBtn');
-  if (skipBtn) skipBtn.onclick = () => socket.emit('skip');
-  const endWordBtn = $('endWordBtn');
-  if (endWordBtn) endWordBtn.onclick = () => socket.emit('endLastWord');
-  const settingsBtn = $('settingsBtn');
-  if (settingsBtn) settingsBtn.onclick = openSettings;
-  const addBotBtn = $('addBotBtn');
-  if (addBotBtn) addBotBtn.onclick = () => { socket.emit('addBot'); Sound.play('select'); };
-  const endDefenseBtn = $('endDefenseBtn');
-  if (endDefenseBtn) endDefenseBtn.onclick = () => socket.emit('endDefense');
-  const vYes = $('vYes');
-  if (vYes) vYes.onclick = () => { socket.emit('verdict', true); Sound.play('select'); };
-  const vNo = $('vNo');
-  if (vNo) vNo.onclick = () => { socket.emit('verdict', false); Sound.play('select'); };
-  const recapBtn = $('recapBtn');
-  if (recapBtn) recapBtn.onclick = openRecap;
+  // Barmoq tugmada turgan paytda qayta chizmaymiz — aks holda bosish "yo'qolib" qoladi
+  if (centerHeld) centerPending = html;
+  else setHTML($('center'), html);
 }
+
+// Stol markazidagi tugmalar: bitta umumiy tinglovchi (tugmalar qayta chizilsa ham ishlaydi)
+const CENTER_ACTIONS = {
+  startBtn: () => socket.emit('start', (r) => r && r.error && toast(errText(r))),
+  readyBtn: () => socket.emit('ready'),
+  againBtn: () => socket.emit('lobby'),
+  skipBtn: () => socket.emit('skip'),
+  endWordBtn: () => socket.emit('endLastWord'),
+  settingsBtn: () => openSettings(),
+  addBotBtn: () => { socket.emit('addBot'); Sound.play('select'); },
+  endDefenseBtn: () => socket.emit('endDefense'),
+  vYes: () => { socket.emit('verdict', true); Sound.play('select'); },
+  vNo: () => { socket.emit('verdict', false); Sound.play('select'); },
+  recapBtn: () => openRecap(),
+  skipVoteBtn: () => { socket.emit('vote', SKIP); Sound.play('select'); },
+};
+$('center').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[id]');
+  if (btn && !btn.disabled && CENTER_ACTIONS[btn.id]) CENTER_ACTIONS[btn.id]();
+});
+let centerHeld = false;
+let centerPending = null;
+$('center').addEventListener('pointerdown', () => { centerHeld = true; });
+const releaseCenter = () => {
+  if (!centerHeld) return;
+  // click hodisasi pointerup'dan keyin keladi — qayta chizishni undan keyinga qoldiramiz
+  setTimeout(() => {
+    centerHeld = false;
+    if (centerPending !== null) { const html = centerPending; centerPending = null; setHTML($('center'), html); }
+  }, 0);
+};
+window.addEventListener('pointerup', releaseCenter);
+window.addEventListener('pointercancel', releaseCenter);
 
 // ───────── O'YIN XULOSASI ─────────
 function renderRecap() {
@@ -925,10 +944,13 @@ function renderRecap() {
     const groups = {};
     for (const [from, to] of Object.entries(h.votes || {})) (groups[to] = groups[to] || []).push(from);
     const votes = Object.entries(groups).sort((a, b) => b[1].length - a[1].length)
-      .map(([to, froms]) => `<li>🗳️ ${who(to)} ← ${froms.map((f) => esc((byId.get(f) || {}).name || '?')).join(', ')} <span class="cnt">(${froms.length})</span></li>`).join('');
+      .map(([to, froms]) => to === SKIP
+        ? `<li>${t('rc.skipGroup', { names: froms.map((f) => esc((byId.get(f) || {}).name || '?')), n: froms.length })}</li>`
+        : `<li>🗳️ ${who(to)} ← ${froms.map((f) => esc((byId.get(f) || {}).name || '?')).join(', ')} <span class="cnt">(${froms.length})</span></li>`).join('');
     let res;
     if (h.out) res = t('rc.out', { name: who(h.out) }) + (h.verdict ? t('rc.outVerdict', h.verdict) : '');
     else if (h.accused && h.verdict) res = t('rc.acquitted', { name: who(h.accused), ...h.verdict });
+    else if (h.skipped) res = t('rc.skipped');
     else res = t('rc.tie');
     return `<section class="rt day"><h4>${t('rc.dayTitle', { n: h.round })}</h4><ul>${votes || `<li>${t('rc.noVotes')}</li>`}<li class="sum">${res}</li></ul></section>`;
   }).join('') || `<p class="set-note">${t('rc.empty')}</p>`;
