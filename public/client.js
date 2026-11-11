@@ -277,7 +277,6 @@ socket.on('state', (s) => {
   trackChanges(prev, s);
   render();
   playSounds(prev, s);
-  narrate(prev, s);
   playEffects(prev, s);
 });
 
@@ -432,51 +431,6 @@ socket.on('reaction', ({ id, e }) => {
   setTimeout(() => el.remove(), 2200);
   Sound.play('pop');
 });
-
-// ───────── DIKTOR ─────────
-$('narratorToggle').checked = Narrator.enabled;
-$('narratorToggle').onchange = (e) => {
-  Narrator.setEnabled(e.target.checked);
-  if (e.target.checked) Narrator.say("Diktor yoqildi. Shahar sizni tinglaydi.", { interrupt: true });
-};
-function narratorInfo() {
-  $('narratorInfo').textContent = Narrator.supported
-    ? `Ovoz: ${Narrator.voiceLabel}. O'zbek ovozi bo'lmasa, turk ovozi ishlatiladi.`
-    : "Bu brauzer nutq sintezini qo'llamaydi.";
-}
-narratorInfo();
-setTimeout(narratorInfo, 1500); // ovozlar ro'yxati kechikib yuklanadi
-
-/** Faqat hammaga ochiq ma'lumotni e'lon qiladi */
-function narrate(prev, s) {
-  if (!prev) return;
-  const said = new Set(prev.log.map((l) => l.id));
-  const fresh = s.log.filter((l) => !said.has(l.id) && l.to === null);
-  if (prev.phase !== s.phase) {
-    const acc = s.players.find((p) => p.accused);
-    const lines = {
-      roles: "Rollar tarqatildi. Kartangizga qarang va hech kimga ko'rsatmang.",
-      night: 'Shahar uxlaydi. Hamma ko\'zini yumsin.',
-      morning: "Tong otdi. Shahar uyg'onadi.",
-      day: 'Muhokama boshlandi. Kim mafiya?',
-      vote: 'Ovoz berish vaqti. Shahardan kimni chiqaramiz?',
-      defense: acc ? `${acc.name}, sizga so'z. O'zingizni oqlang.` : '',
-      verdict: 'Yakuniy ovoz.',
-      lastWord: "Oxirgi so'z.",
-    };
-    if (lines[s.phase]) Narrator.say(lines[s.phase], { interrupt: true });
-    if (s.phase === 'morning' || s.phase === 'voteResult') {
-      fresh.filter((l) => ['death', 'day'].includes(l.kind) && !/Tong otdi/.test(l.text)).forEach((l) => Narrator.say(l.text));
-    }
-    if (s.phase === 'gameover') {
-      const w = s.log.filter((l) => l.kind === 'win').pop();
-      if (w) Narrator.say(w.text, { interrupt: true });
-    }
-  }
-  if (s.phase === 'night' && s.step && (!prev.step || prev.step.key !== s.step.key)) {
-    Narrator.say(s.step.title.replace("uyg'ondi", "uyg'onadi"));
-  }
-}
 
 // ───────── ovozlar: holat o'zgarishiga qarab ─────────
 let lastDeathLogId = Infinity;

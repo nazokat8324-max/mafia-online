@@ -2,9 +2,9 @@
 /* Service worker — ilovani telefonga o'rnatish (PWA) uchun.
    Strategiya: avval tarmoq, faqat internet bo'lmasa — saqlangan nusxa.
    Shunday qilib yangi versiya chiqqanda hech kim eski kodda qolib ketmaydi. */
-const CACHE = 'mafia-v1';
+const CACHE = 'mafia-v2';
 const SHELL = [
-  '/', '/style.css', '/client.js', '/sound.js', '/voice.js', '/narrator.js',
+  '/', '/style.css', '/client.js', '/sound.js', '/voice.js',
   '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png',
 ];
 
