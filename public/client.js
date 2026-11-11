@@ -99,9 +99,14 @@ function setTheme(t) {
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = t === 'noir' ? '#0b0b0b' : '#07060f';
   document.querySelectorAll('[data-theme-pick]').forEach((b) => b.classList.toggle('on', b.dataset.themePick === t));
+  Sound.refresh(); // musiqa yangi uslubda davom etadi
 }
 document.querySelectorAll('[data-theme-pick]').forEach((b) => {
-  b.onclick = () => { setTheme(b.dataset.themePick); Sound.play('select'); };
+  b.onclick = () => {
+    setTheme(b.dataset.themePick);
+    Sound.play('select');
+    Sound.preview('night', 7); // uslubning tungi musiqasidan parcha
+  };
 });
 $('themeBtn').onclick = () => {
   setTheme(currentTheme() === 'neon' ? 'noir' : 'neon');
