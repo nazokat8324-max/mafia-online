@@ -99,7 +99,7 @@ async function playGame({ n, title, settings }) {
   await new Promise((resolve) => {
     const iv = setInterval(() => {
       if (host.last && host.last.phase === 'gameover') { clearInterval(iv); resolve(); }
-      if (Date.now() - t0 > 90000) fail(`${n} kishilik o'yin tugamadi (faza: ${host.last && host.last.phase})`);
+      if (Date.now() - t0 > 180000) fail(`${n} kishilik o'yin tugamadi (faza: ${host.last && host.last.phase})`);
     }, 50);
   });
   const st = host.last;

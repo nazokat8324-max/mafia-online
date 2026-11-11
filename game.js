@@ -196,7 +196,15 @@ class Room {
     clearTimeout(this.timer);
     const t = ms(seconds);
     this.endsAt = Date.now() + t;
-    this.timer = setTimeout(() => { this.timer = null; fn(); }, t);
+    this.timer = setTimeout(() => {
+      this.timer = null;
+      // Taymer ichidagi kutilmagan xato butun serverni (barcha xonalarni) yiqitmasin
+      try { fn(); } catch (e) {
+        console.error(`[${this.code}] taymer xatosi (${this.phase}):`, e);
+        this.addLog("⚠️ Serverda xatolik yuz berdi, o'yin davom ettirilmoqda.", 'sys');
+        this.broadcast();
+      }
+    }, t);
   }
 
   clearTimer() {
